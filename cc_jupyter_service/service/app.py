@@ -1,8 +1,7 @@
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 import cc_jupyter_service.service.db as db
-import cc_jupyter_service.service.auth as auth
 
 DESCRIPTION = 'CC-Agency Broker.'
 
@@ -28,9 +27,8 @@ def create_app(test_config=None):
 
     @app.route('/', methods=['GET'])
     def get_root():
-        return b'Hello world!'
+        return render_template('hello.html')
 
     db.init_app(app)
-    app.register_blueprint(auth.bp)
 
     return app

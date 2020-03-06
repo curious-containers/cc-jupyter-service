@@ -4,7 +4,42 @@
     <meta charset="UTF-8">
     <title>CC-Jupyter-Service</title>
 </head>
+{#<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">#}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="/static/js/index.js"></script>
 <body>
-This is the body.
+<section id="drop_zone">
+    <header>
+        <h1>Jupyter Notebook</h1>
+    </header>
+    <div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"
+         ondrop="dropNotebook(event)" ondragover="allowDrop(event)"></div>
+    <ul id="notebookList">
+
+    </ul>
+</section>
+<section id="agency_section">
+    <header>
+        <h1>Agency Authentication</h1>
+    </header>
+    <label for="agency_url">URL</label><br>
+    <input name="agency_url" id="agency_url"><br>
+    <label for="agency_username">Username</label><br>
+    <input name="agency_username" id="agency_username"><br>
+    <label for="agency_password">Password</label><br>
+    <input type="password" name="agency_password" id="agency_password">
+</section>
+<section id="dependencies_section">
+    <header>
+        <h1>Dependencies</h1>
+    </header>
+
+    <input type="checkbox" name="cuda_required" id="cuda_required" checked="checked">
+    <label for="cuda_required">CUDA</label><br>
+
+    <input type="checkbox" name="tensorflow_required" id="tensorflow_required" checked="checked">
+    <label for="tensorflow_required">Tensorflow</label>
+</section>
+<input type="button" name="submit_button" id="submit_button" value="Submit">
 </body>
 </html>
