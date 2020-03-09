@@ -1,9 +1,11 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
+from werkzeug.exceptions import BadRequest
+
 import cc_jupyter_service.service.db as db
 
-DESCRIPTION = 'CC-Agency Broker.'
+DESCRIPTION = 'CC-Jupyter-Service.'
 
 
 def create_app(test_config=None):
@@ -28,6 +30,15 @@ def create_app(test_config=None):
     @app.route('/', methods=['GET'])
     def get_root():
         return render_template('hello.html')
+
+    @app.route('/executeNotebook', methods=['POST'])
+    def execute_notebook():
+        if not request.json:
+            raise BadRequest('Did not send data as json')
+
+        notebook_data = request.json
+
+        return jsonify({'hello': 'world'})
 
     db.init_app(app)
 

@@ -1,32 +1,122 @@
 $(document).ready(function() {
-    $("#submit_button").click(function() {
-        console.log('button pressed');
+    /**
+     * Displays an error message to the user.
+     *
+     * @param errorMessage The message to show
+     */
+    function showError(errorMessage) {
+        $('#messages').append('<div class="flash">' + errorMessage + '</div>');
+    }
+
+    const jupyterNotebooks = [];
+
+    /**
+     * Creates a new NotebookEntry.
+     *
+     * @param notebookData The json data of the notebook
+     * @param filename The notebook filename
+     */
+    function createNotebookEntry(notebookData, filename) {
+        return {
+            'data': notebookData,
+            'filename': filename
+        }
+    }
+
+    /**
+     * Callback for Notebook drop. This function loads all dropped jupyter notebooks and
+     * appends it to the notebookList.
+     *
+     * @param event The drop event
+     */
+    function ondropNotebookHandler(event) {
+        event.stopPropagation();
+        event.preventDefault();
+        const notebookList = $('#notebookList');
+
+        for (const file of event.originalEvent.dataTransfer.files) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const [ contentType, content ] = e.target.result.split(',');
+
+                // TODO: allow more contentTypes; test under chrome
+                if (contentType !== 'data:application/x-ipynb+json;base64') {
+                    console.log('Wrong contentType: ', contentType);
+                    showError('Wrong contentType: ' + contentType);
+                    return;
+                }
+
+                let json = null;
+                try {
+                    const decodedContent = atob(content);
+                    json = JSON.parse(decodedContent);
+                } catch (e) {
+                    console.log('Error while decoding notebook.' + e);
+                    showError('Error while decoding notebook.' + e);
+                    return;
+                }
+                jupyterNotebooks.push(createNotebookEntry(json, file.name));
+                notebookList.append('<li>' + file.name + '</li>');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    const dropZone = $('#dropZone');
+
+    dropZone.on("dragover", function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+    });
+
+    dropZone.on("dragleave", function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+    });
+
+    dropZone.on('drop', ondropNotebookHandler);
+
+    $("#submitButton").click(function() {
+        const agencyUrl = $('#agencyUrl').val();
+        const agencyUsername = $('#agencyUsername').val();
+        const agencyPassword = $('#agencyPassword').val();
+
+        if (agencyUrl === '') {
+            showError('Agency URL is required');
+            return;
+        }
+        if (agencyUsername === '') {
+            showError('Agency Username is required');
+            return;
+        }
+        if (agencyPassword === '') {
+            showError('Agency Password is required');
+            return;
+        }
+
+        if (jupyterNotebooks.length === 0) {
+            showError('Upload at least one jupyter notebook');
+            return;
+        }
+
+        // noinspection JSIgnoredPromiseFromCall
+        $.ajax({
+            url: '/executeNotebook',
+            method: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                agencyUrl,
+                agencyUsername,
+                agencyPassword,
+                jupyterNotebooks,
+                dependencies: []  // TODO: dependencies
+            })
+        }).done(function(data) {
+            console.log('success');
+            console.log(data);
+        }).fail(function (e, timeout, errorMessage) {
+            console.error(errorMessage);
+        })
     });
 });
-
-function allowDrop(ev) {
-    ev.preventDefault();
-}
-
-/**
- * Callback for Notebook drop. This function loads all dropped jupyter notebooks and
- * appends it to the notebookList.
- *
- * @param event The drop event
- */
-function dropNotebook(event) {
-    event.stopPropagation();
-    event.preventDefault();
-    const notebookList = $('#notebookList');
-    let reader = new FileReader();
-
-    reader.onload = function(e) {
-        const [, content ] = e.target.result.split(',');
-        // TODO: assert contentType == json
-        // console.log('decoded content: ', JSON.parse(atob(content)));
-        notebookList.append('new file');
-    };
-    for (const file of event.dataTransfer.files) {
-        reader.readAsDataURL(file);
-    }
-}

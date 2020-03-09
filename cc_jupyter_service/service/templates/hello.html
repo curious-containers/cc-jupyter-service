@@ -8,38 +8,41 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="/static/js/index.js"></script>
 <body>
-<section id="drop_zone">
+<section id="messages">
+
+</section>
+<section id="dropZoneSection">
     <header>
         <h1>Jupyter Notebook</h1>
     </header>
-    <div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"
-         ondrop="dropNotebook(event)" ondragover="allowDrop(event)"></div>
+    <div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>
     <ul id="notebookList">
 
     </ul>
 </section>
-<section id="agency_section">
+<section id="agencySection">
     <header>
         <h1>Agency Authentication</h1>
     </header>
-    <label for="agency_url">URL</label><br>
-    <input name="agency_url" id="agency_url"><br>
-    <label for="agency_username">Username</label><br>
-    <input name="agency_username" id="agency_username"><br>
-    <label for="agency_password">Password</label><br>
-    <input type="password" name="agency_password" id="agency_password">
+    <label for="agencyUrl">URL</label><br>
+    <input name="agencyUrl" id="agencyUrl"><br>
+    <label for="agencyUsername">Username</label><br>
+    <input name="agencyUsername" id="agencyUsername"><br>
+    <label for="agencyPassword">Password</label><br>
+    <input type="password" name="agencyPassword" id="agencyPassword">
 </section>
-<section id="dependencies_section">
+<section id="dependenciesSection">
     <header>
         <h1>Dependencies</h1>
     </header>
 
-    <input type="checkbox" name="cuda_required" id="cuda_required" checked="checked">
-    <label for="cuda_required">CUDA</label><br>
+    <input type="checkbox" name="cudaRequired" id="cudaRequired" checked="checked">
+    <label for="cudaRequired">CUDA</label><br>
 
-    <input type="checkbox" name="tensorflow_required" id="tensorflow_required" checked="checked">
-    <label for="tensorflow_required">Tensorflow</label>
+    <input type="checkbox" name="tensorflowRequired" id="tensorflowRequired" checked="checked">
+    <label for="tensorflowRequired">Tensorflow</label>
 </section>
-<input type="button" name="submit_button" id="submit_button" value="Submit">
+<br>
+<input type="button" name="submitButton" id="submitButton" value="Execute">
 </body>
 </html>
