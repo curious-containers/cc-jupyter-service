@@ -2,8 +2,11 @@ import os
 
 from flask import Flask, render_template, request, jsonify
 from werkzeug.exceptions import BadRequest
+import jsonschema
+import nbformat
 
 import cc_jupyter_service.service.db as db
+from cc_jupyter_service.common.schema.request import request_schema
 
 DESCRIPTION = 'CC-Jupyter-Service.'
 
@@ -36,7 +39,18 @@ def create_app(test_config=None):
         if not request.json:
             raise BadRequest('Did not send data as json')
 
-        notebook_data = request.json
+        request_data = request.json
+
+        try:
+            jsonschema.validate(request_data, request_schema)
+        except jsonschema.ValidationError as e:
+            raise BadRequest('Failed to validate toplevel schema. {}'.format(str(e)))
+
+        for jupyterNotebook in request_data['jupyterNotebooks']:
+            try:
+                nbformat.validate(jupyterNotebook['data'])
+            except nbformat.ValidationError as e:
+                raise BadRequest('Failed to validate notebook "{}.\n{}"'.format(jupyterNotebook['filename'], str(e)))
 
         return jsonify({'hello': 'world'})
 

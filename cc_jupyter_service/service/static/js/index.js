@@ -36,29 +36,19 @@ $(document).ready(function() {
 
         for (const file of event.originalEvent.dataTransfer.files) {
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const [ contentType, content ] = e.target.result.split(',');
-
-                // TODO: allow more contentTypes; test under chrome
-                if (contentType !== 'data:application/x-ipynb+json;base64') {
-                    console.log('Wrong contentType: ', contentType);
-                    showError('Wrong contentType: ' + contentType);
-                    return;
-                }
-
+            reader.onload = function(ev) {
                 let json = null;
                 try {
-                    const decodedContent = atob(content);
-                    json = JSON.parse(decodedContent);
-                } catch (e) {
-                    console.log('Error while decoding notebook.' + e);
-                    showError('Error while decoding notebook.' + e);
+                    json = JSON.parse(ev.target.result);
+                } catch (error) {
+                    console.error('Error while decoding notebook.' + error + '\ncontent was: ' + ev.target.result);
+                    showError('Error while decoding notebook. ' + error);
                     return;
                 }
                 jupyterNotebooks.push(createNotebookEntry(json, file.name));
                 notebookList.append('<li>' + file.name + '</li>');
             };
-            reader.readAsDataURL(file);
+            reader.readAsText(file);
         }
     }
 
@@ -115,8 +105,9 @@ $(document).ready(function() {
         }).done(function(data) {
             console.log('success');
             console.log(data);
-        }).fail(function (e, timeout, errorMessage) {
-            console.error(errorMessage);
+        }).fail(function (e, statusText, errorMessage) {
+            console.error(errorMessage, e.responseText);
+            showError(e.responseText)
         })
     });
 });
