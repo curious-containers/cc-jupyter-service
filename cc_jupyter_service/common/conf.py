@@ -1,3 +1,5 @@
+import os
+
 import jsonschema
 from ruamel.yaml import YAML, YAMLError
 
@@ -6,8 +8,49 @@ from cc_jupyter_service.common.schema.configuration import configuration_schema
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 
+CONFIG_FILE_LOCATIONS = ['cc-agency-jupyter-service-config.yml', '~/.config/cc-agency-jupyter-service-config.yml']
+
 
 class Conf:
+    def __init__(self, notebook_directory):
+        """
+        Creates a new Conf object.
+
+        :param notebook_directory: The directory where to save the notebooks
+        :type notebook_directory: str
+        """
+        self.notebook_directory = notebook_directory
+
+    @staticmethod
+    def from_system():
+        """
+        Loads the configuration file by searching at the following locations:
+        - $HOME/.config/cc-agency-jupyter-service-config.yml
+        - ./cc-agency-jupyter-service-config.yml
+
+        The first present configuration file will be used.
+        If on configuration file could be found a default configuration will be used.
+
+        :return: The first configuration that was found
+        :rtype: Conf
+
+        :raise ConfigurationError: if an invalid configuration file was found
+        """
+        conf = None
+        for config_location in CONFIG_FILE_LOCATIONS:
+            path = os.path.expanduser(config_location)
+            try:
+                conf = Conf.from_path(path)
+            except ConfigurationError as e:
+                raise ConfigurationError('An invalid configuration file was found at "{}".\n{}'.format(path, str(e)))
+            except FileNotFoundError:
+                continue
+
+        if conf is None:
+            conf = Conf(notebook_directory='notebook_database')
+
+        return conf
+
     @staticmethod
     def from_path(path):
         """
@@ -19,7 +62,7 @@ class Conf:
         :return: A new conf object
         :rtype: Conf
 
-        :raise ConfigurationError: If the configuration file is invalid
+        :raise ConfigurationError: If the configuration file is invalid or could not be found
         """
         try:
             with open(path, 'r') as f:
@@ -35,15 +78,6 @@ class Conf:
             raise ConfigurationError('Invalid config file. {}'.format(e))
 
         return Conf(notebook_directory=data['notebookDirectory'])
-
-    def __init__(self, notebook_directory):
-        """
-        Creates a new Conf object.
-
-        :param notebook_directory: The directory where to save the notebooks
-        :type notebook_directory: str
-        """
-        self.notebook_directory = notebook_directory
 
 
 class ConfigurationError(Exception):
