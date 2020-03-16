@@ -1,34 +1,27 @@
 import json
 import os
-import base64
-from uuid import uuid4
+from uuid import UUID
 
 
 class NotebookCursor:
-    def __init__(self, token, agency_url, agency_username):
+    def __init__(self, token):
         """
         Represents a notebook saved on disk. Does not contain the data of the notebook.
 
         :param token: The token of the notebook
-        :type token: str
-        :param agency_url: The agency url
-        :type agency_url: str
-        :param agency_username: The owning user
-        :type agency_username: str
+        :type token: UUID
         """
         self.token = token
-        self.agency_url = agency_url
-        self.agency_username = agency_username
 
     def get_path(self, database_directory):
         """
         :param database_directory: The database directory
         :type database_directory: str
 
-        :return: the path of the saved notebook
+        :return: the path of the notebook
         :rtype: str
         """
-        return os.path.join(database_directory, base64.b64encode(self.agency_url), base64.b64encode(self.agency_username), self.token)
+        return os.path.join(database_directory, '{}.ipynb'.format(str(self.token)))
 
 
 class NotebookDatabase:
@@ -37,9 +30,7 @@ class NotebookDatabase:
 
     The database directory is ordered in the following way:
     / database_directory/
-      / agency_url_base64_encoded/
-        / agency_username_base64_encoded/
-          / notebook_token.ipynb
+      / notebook_token.ipynb
     """
     def __init__(self, database_directory):
         """
@@ -53,21 +44,19 @@ class NotebookDatabase:
         if not os.path.isdir(database_directory):
             os.makedirs(database_directory)
 
-    def save_notebook(self, notebook_data, agency_url, agency_username):
+    def save_notebook(self, notebook_data, token):
         """
         Saves the given notebook on the filesystem.
 
         :param notebook_data: The notebook file data
         :type notebook_data: object
-        :param agency_url: The url of the agency
-        :type agency_url: str
-        :param agency_username: The username of the user owning the notebook
-        :type agency_username: str
+        :param token: The token for identification of the notebook
+        :type token: uuid.UUID
         :return: A NotebookCursor pointing to the created file
         :rtype: NotebookCursor
         """
-        token = str(uuid4())
-        notebook_cursor = NotebookCursor(token, agency_url, agency_username)
+        notebook_cursor = NotebookCursor(token)
         with open(notebook_cursor.get_path(self.database_directory), 'w') as file:
             json.dump(notebook_data, file)
+
         return notebook_cursor

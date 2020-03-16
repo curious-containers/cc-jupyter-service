@@ -6,6 +6,7 @@ import jsonschema
 import nbformat
 
 import cc_jupyter_service.service.db as db
+from cc_jupyter_service.common.execution import exec_notebook
 from cc_jupyter_service.common.notebook_database import NotebookDatabase
 from cc_jupyter_service.common.schema.request import request_schema
 from cc_jupyter_service.common.conf import Conf
@@ -30,17 +31,14 @@ def create_app():
 
     notebook_database = NotebookDatabase(conf.notebook_directory)
 
-    @app.route('/', methods=['GET'])
-    def get_root():
-        return render_template('hello.html')
+    def validate_request(request_data):
+        """
+        This function validates the given request data.
 
-    @app.route('/executeNotebook', methods=['POST'])
-    def execute_notebook():
-        if not request.json:
-            raise BadRequest('Did not send data as json')
+        :param request_data: The request data to validate
 
-        request_data = request.json
-
+        :raise BadRequest: If the request data is invalid
+        """
         try:
             jsonschema.validate(request_data, request_schema)
         except jsonschema.ValidationError as e:
@@ -52,11 +50,34 @@ def create_app():
             except nbformat.ValidationError as e:
                 raise BadRequest('Failed to validate notebook "{}.\n{}"'.format(jupyter_notebook['filename'], str(e)))
 
+    @app.route('/', methods=['GET'])
+    def get_root():
+        return render_template('hello.html')
+
+    @app.route('/executeNotebook', methods=['POST'])
+    def execute_notebook():
+        if not request.json:
+            raise BadRequest('Did not send data as json')
+
+        request_data = request.json
+
+        validate_request(request_data)
+
+        if 'localhost' in request.url_root or '127.0.0.1' in request.url_root:
+            raise BadRequest(
+                'Cant retrieve public endpoint of this jupyter service. '
+                'Make sure this jupyter service runs not on localhost'
+            )
+
         for jupyter_notebook in request_data['jupyterNotebooks']:
-            notebook_database.save_notebook(
+            print('################\nrequest.endpoint: {}\n###############'.format(request.url_root))
+            exec_notebook(
                 jupyter_notebook['data'],
-                request_data['agencyUrl'],
-                request_data['agencyUsername']
+                agency_url=request_data['agencyUrl'],
+                agency_username=request_data['agencyUsername'],
+                agency_password=request_data['agencyPassword'],
+                notebook_database=notebook_database,
+                url_root=request.url_root
             )
 
         return jsonify({'hello': 'world'})
