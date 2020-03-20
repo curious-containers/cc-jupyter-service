@@ -22,9 +22,7 @@ def check_agency(agency_url, agency_username, agency_password):
 
     :raise AgencyError: If the agency is not available or authentication information is invalid.
     """
-    print('agency_url: {}'.format(agency_url))
     agency_url = url_join(agency_url + '/', 'nodes')
-    print('agency_url: {}'.format(agency_url))
     response = requests.get(agency_url, auth=(agency_username, agency_password))
     try:
         response.raise_for_status()
@@ -55,6 +53,9 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
     :type notebook_database: NotebookDatabase
     :param url_root: The url root of this notebook service
     :type url_root: str
+
+    :return: The experiment id of the executed experiment
+    :rtype: str
     """
     agency_url = url_fix(agency_url)
 
@@ -69,12 +70,12 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
         (str(token), agency_username, agency_url)
     )
 
-    start_agency(token, agency_url, agency_username, agency_password, url_root)
+    return start_agency(token, agency_url, agency_username, agency_password, url_root)
 
 
-def start_agency(token, agency_url, agency_username, agency_password, url_root):
+def _create_red_data(token, agency_url, agency_username, agency_password, url_root):
     """
-    Executes the given notebook on the given agency.
+    Creates the red data that can be used for execution on an agency.
 
     :param token: The token to reference the notebook.
     :type token: uuid.UUID
@@ -86,6 +87,7 @@ def start_agency(token, agency_url, agency_username, agency_password, url_root):
     :type agency_password: str
     :param url_root: The url root of this notebook service
     :type url_root: str
+    :return: The red data filled with the given information to execute on an agency
     """
     red_data = copy.deepcopy(red_file_template.RED_FILE_TEMPLATE)
 
@@ -103,6 +105,41 @@ def start_agency(token, agency_url, agency_username, agency_password, url_root):
     execution_engine_access['url'] = agency_url
     execution_engine_access['auth']['username'] = agency_username
     execution_engine_access['auth']['password'] = agency_password
+
+    return red_data
+
+
+def start_agency(token, agency_url, agency_username, agency_password, url_root):
+    """
+    Executes the given notebook on the given agency.
+
+    :param token: The token to reference the notebook.
+    :type token: uuid.UUID
+    :param agency_url: The agency to use for execution
+    :type agency_url: str
+    :param agency_username: The agency username to use
+    :type agency_username: str
+    :param agency_password: The password for the given agency user
+    :type agency_password: str
+    :param url_root: The url root of this notebook service
+    :type url_root: str
+
+    :return: The experiment id of the started experiment
+    :rtype: str
+
+    :raise HTTPError: If the red post failed
+    """
+    red_data = _create_red_data(token, agency_url, agency_username, agency_password, url_root)
+
+    r = requests.post(
+        url_join(agency_url, '/red'),
+        auth=(agency_username, agency_password),
+        json=red_data
+    )
+
+    r.raise_for_status()
+
+    return r.json()['experimentId']
 
 
 class AgencyError(Exception):

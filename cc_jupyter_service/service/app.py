@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask, render_template, request, jsonify
+from requests import HTTPError
 from werkzeug.exceptions import BadRequest
 import jsonschema
 import nbformat
@@ -69,18 +70,23 @@ def create_app():
                 'Make sure this jupyter service runs not on localhost'
             )
 
-        for jupyter_notebook in request_data['jupyterNotebooks']:
-            print('################\nrequest.endpoint: {}\n###############'.format(request.url_root))
-            exec_notebook(
-                jupyter_notebook['data'],
-                agency_url=request_data['agencyUrl'],
-                agency_username=request_data['agencyUsername'],
-                agency_password=request_data['agencyPassword'],
-                notebook_database=notebook_database,
-                url_root=request.url_root
-            )
+        experiment_ids = []
 
-        return jsonify({'hello': 'world'})
+        for jupyter_notebook in request_data['jupyterNotebooks']:
+            try:
+                experiment_id = exec_notebook(
+                    jupyter_notebook['data'],
+                    agency_url=request_data['agencyUrl'],
+                    agency_username=request_data['agencyUsername'],
+                    agency_password=request_data['agencyPassword'],
+                    notebook_database=notebook_database,
+                    url_root=request.url_root
+                )
+            except HTTPError as e:
+                raise BadRequest('Could not execute {}. {}'.format(jupyter_notebook['filename'], str(e)))
+            experiment_ids.append(experiment_id)
+
+        return jsonify({'experimentIds': experiment_ids})
 
     db.init_app(app)
 
