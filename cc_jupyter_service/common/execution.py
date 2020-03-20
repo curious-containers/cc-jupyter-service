@@ -1,11 +1,29 @@
 import copy
 import uuid
+from pprint import pprint
 
 import requests
 from werkzeug.urls import url_fix, url_join
 
 from cc_jupyter_service.common import red_file_template
 from cc_jupyter_service.service.db import get_db
+
+
+def normalize_url(url):
+    """
+    Adds https:// at the begin and / at the end if missing.
+
+    :param url: The url to fix
+    :type url: str
+    :return: The fixed url
+    :rtype: str
+    """
+    url = url_fix(url)
+    if not (url.startswith('https://') or url.startswith('http://')):
+        url = 'https://' + url
+    if not url.endswith('/'):
+        url = url + '/'
+    return url
 
 
 def check_agency(agency_url, agency_username, agency_password):
@@ -22,7 +40,7 @@ def check_agency(agency_url, agency_username, agency_password):
 
     :raise AgencyError: If the agency is not available or authentication information is invalid.
     """
-    agency_url = url_join(agency_url + '/', 'nodes')
+    agency_url = url_join(agency_url, 'nodes')
     response = requests.get(agency_url, auth=(agency_username, agency_password))
     try:
         response.raise_for_status()
@@ -57,7 +75,7 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
     :return: The experiment id of the executed experiment
     :rtype: str
     """
-    agency_url = url_fix(agency_url)
+    agency_url = normalize_url(agency_url)
 
     check_agency(agency_url, agency_username, agency_password)
 
@@ -130,6 +148,8 @@ def start_agency(token, agency_url, agency_username, agency_password, url_root):
     :raise HTTPError: If the red post failed
     """
     red_data = _create_red_data(token, agency_url, agency_username, agency_password, url_root)
+
+    pprint(red_data)
 
     r = requests.post(
         url_join(agency_url, '/red'),
