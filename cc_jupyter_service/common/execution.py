@@ -152,7 +152,7 @@ def start_agency(token, agency_url, agency_username, agency_password, url_root):
     pprint(red_data)
 
     r = requests.post(
-        url_join(agency_url, '/red'),
+        url_join(agency_url, 'red'),
         auth=(agency_username, agency_password),
         json=red_data
     )

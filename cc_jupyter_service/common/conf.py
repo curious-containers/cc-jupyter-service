@@ -8,7 +8,7 @@ from cc_jupyter_service.common.schema.configuration import configuration_schema
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 
-CONFIG_FILE_LOCATIONS = ['cc-agency-jupyter-service-config.yml', '~/.config/cc-agency-jupyter-service-config.yml']
+CONFIG_FILE_LOCATIONS = ['cc-agency-jupyter-service-config.yml', '~/.config/cc-jupyter-service.yml']
 
 
 class Conf:
@@ -25,8 +25,8 @@ class Conf:
     def from_system():
         """
         Loads the configuration file by searching at the following locations:
-        - $HOME/.config/cc-agency-jupyter-service-config.yml
-        - ./cc-agency-jupyter-service-config.yml
+        - $HOME/.config/cc-jupyter-service.yml
+        - ./cc-jupyter-service.yml
 
         The first present configuration file will be used.
         If on configuration file could be found a default configuration will be used.

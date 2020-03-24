@@ -57,6 +57,9 @@ def create_app():
 
     @app.route('/executeNotebook', methods=['POST'])
     def execute_notebook():
+        """
+        This endpoint is used by the frontend to start the execution of a jupyter notebook.
+        """
         if not request.json:
             raise BadRequest('Did not send data as json')
 
@@ -87,6 +90,10 @@ def create_app():
             experiment_ids.append(experiment_id)
 
         return jsonify({'experimentIds': experiment_ids})
+
+    @app.route('/notebook', methods=['GET'])
+    def notebook():
+        print(request.authorization)
 
     db.init_app(app)
 
