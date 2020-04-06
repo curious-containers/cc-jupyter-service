@@ -41,8 +41,8 @@ def check_agency(agency_url, agency_username, agency_password):
     :raise AgencyError: If the agency is not available or authentication information is invalid.
     """
     agency_url = url_join(agency_url, 'nodes')
-    response = requests.get(agency_url, auth=(agency_username, agency_password))
     try:
+        response = requests.get(agency_url, auth=(agency_username, agency_password))
         response.raise_for_status()
     except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
         raise AgencyError(
