@@ -44,10 +44,10 @@ def check_agency(agency_url, agency_username, agency_password):
     response = requests.get(agency_url, auth=(agency_username, agency_password))
     try:
         response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
+    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
         raise AgencyError(
-            'Failed to verify agency for user "{}".\nstatus code: {}\nmessage: {}'.format(
-                agency_username, response.status_code, str(e)
+            'Failed to verify agency "{}" for user "{}".\nstatus code: {}\nmessage: {}'.format(
+                agency_url, agency_username, response.status_code, str(e)
             )
         )
 
