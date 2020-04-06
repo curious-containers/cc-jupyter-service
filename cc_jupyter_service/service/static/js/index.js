@@ -90,8 +90,13 @@ $(document).ready(function() {
         }
 
         // noinspection JSIgnoredPromiseFromCall
+        let url = window.location.href;
+        if (!url.endsWith('/')) {
+            url = url + '/'
+        }
+        url = new URL('executeNotebook', url).href;
         $.ajax({
-            url: '/executeNotebook',
+            url,
             method: 'POST',
             dataType: 'json',
             contentType: 'application/json',
