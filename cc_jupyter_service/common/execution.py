@@ -41,15 +41,21 @@ def check_agency(agency_url, agency_username, agency_password):
     :raise AgencyError: If the agency is not available or authentication information is invalid.
     """
     agency_url = url_join(agency_url, 'nodes')
+    response = None
     try:
         response = requests.get(agency_url, auth=(agency_username, agency_password))
         response.raise_for_status()
     except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
-        raise AgencyError(
-            'Failed to verify agency "{}" for user "{}".\nstatus code: {}\nmessage: {}'.format(
-                agency_url, agency_username, response.status_code, str(e)
+        if response is not None:
+            raise AgencyError(
+                'Failed to verify agency "{}" for user "{}".\nstatus code: {}\nmessage: {}'.format(
+                    agency_url, agency_username, response.status_code, str(e)
+                )
             )
-        )
+        else:
+            raise AgencyError(
+                'Failed to verify agency "{}" for user "{}".\nmessage: {}'.format(agency_url, agency_username, str(e))
+            )
 
 
 def exec_notebook(notebook_data, agency_url, agency_username, agency_password, notebook_database, url_root):
