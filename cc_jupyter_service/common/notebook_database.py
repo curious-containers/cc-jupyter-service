@@ -21,7 +21,7 @@ class NotebookCursor:
         :return: the path of the notebook
         :rtype: str
         """
-        return os.path.join(database_directory, '{}.ipynb'.format(str(self.token)))
+        return
 
 
 class NotebookDatabase:
@@ -44,19 +44,39 @@ class NotebookDatabase:
         if not os.path.isdir(database_directory):
             os.makedirs(database_directory)
 
-    def save_notebook(self, notebook_data, token):
+    def _notebook_id_to_path(self, notebook_id):
+        """
+        Returns the path of the requested notebook.
+
+        :param notebook_id: The id to get the path of
+        :type notebook_id: str
+        :return: The path to the notebook
+        :rtype: str
+        """
+        return os.path.join(self.database_directory, '{}.ipynb'.format(notebook_id))
+
+    def save_notebook(self, notebook_data, notebook_id):
         """
         Saves the given notebook on the filesystem.
 
         :param notebook_data: The notebook file data
         :type notebook_data: object
-        :param token: The token for identification of the notebook
-        :type token: uuid.UUID
+        :param notebook_id: The id of the notebook
+        :type notebook_id: uuid.UUID
         :return: A NotebookCursor pointing to the created file
         :rtype: NotebookCursor
         """
-        notebook_cursor = NotebookCursor(token)
-        with open(notebook_cursor.get_path(self.database_directory), 'w') as file:
+        path = self._notebook_id_to_path(str(notebook_id))
+        with open(path, 'w') as file:
             json.dump(notebook_data, file)
 
-        return notebook_cursor
+    def get_notebook(self, notebook_id):
+        """
+        Returns the requested notebook.
+
+        :param notebook_id: The id of the requested notebook
+        :type notebook_id: str
+        :return: The requested notebook data
+        :rtype: object
+        """
+        raise NotImplementedError()

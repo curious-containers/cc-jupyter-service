@@ -6,8 +6,8 @@ from werkzeug.exceptions import BadRequest
 import jsonschema
 import nbformat
 
-import cc_jupyter_service.service.db as db
-from cc_jupyter_service.common.execution import exec_notebook
+import cc_jupyter_service.service.db as database
+from cc_jupyter_service.common.execution import exec_notebook, get_notebook
 from cc_jupyter_service.common.notebook_database import NotebookDatabase
 from cc_jupyter_service.common.schema.request import request_schema
 from cc_jupyter_service.common.conf import Conf
@@ -91,10 +91,19 @@ def create_app():
 
         return jsonify({'experimentIds': experiment_ids})
 
-    @app.route('/notebook', methods=['GET'])
-    def notebook():
-        print(request.authorization)
+    @app.route('/notebook/<notebook_id>', methods=['GET'])
+    def notebook(notebook_id):
+        """
+        Returns the requested notebook.
 
-    db.init_app(app)
+        :param notebook_id: The id of the notebook
+        :type notebook_id: str
+        """
+        db = database.get_db()
+
+        # validate user
+        notebook_database.get_notebook(notebook_id)
+
+    database.init_app(app)
 
     return app

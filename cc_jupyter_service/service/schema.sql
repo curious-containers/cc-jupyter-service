@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS  notebook;
 
 CREATE TABLE notebook (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  notebook_id TEXT UNIQUE NOT NULL,
   token TEXT UNIQUE NOT NULL,
   username TEXT NOT NULL,
   agencyurl TEXT NOT NULL

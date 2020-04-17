@@ -1,12 +1,19 @@
 import copy
 import uuid
-from pprint import pprint
 
 import requests
 from werkzeug.urls import url_fix, url_join
 
 from cc_jupyter_service.common import red_file_template
 from cc_jupyter_service.service.db import get_db
+
+
+def get_notebook():
+    """
+    Returns the requested notebook data.
+
+    :return:
+    """
 
 
 def normalize_url(url):
@@ -61,7 +68,7 @@ def check_agency(agency_url, agency_username, agency_password):
 def exec_notebook(notebook_data, agency_url, agency_username, agency_password, notebook_database, url_root):
     """
     - Validates the agency authentication information
-    - Generates a new token for the notebook
+    - Generates a new id and token for the notebook
     - Saves the notebook
     - Saves meta information in the db
     - Executes the notebook on the agency
@@ -85,24 +92,29 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
 
     check_agency(agency_url, agency_username, agency_password)
 
-    token = uuid.uuid4()
-    notebook_database.save_notebook(notebook_data, token)
+    notebook_id = uuid.uuid4()
+
+    notebook_token = uuid.uuid4()
+    notebook_database.save_notebook(notebook_data, notebook_id)
 
     db = get_db()
     db.execute(
-        'INSERT INTO notebook (token, username, agencyurl) VALUES (?, ?, ?)',
-        (str(token), agency_username, agency_url)
+        'INSERT INTO notebook (notebook_id, token, username, agencyurl) VALUES (?, ?, ?, ?)',
+        (str(notebook_id), str(notebook_token), agency_username, agency_url)
     )
+    db.commit()
 
-    return start_agency(token, agency_url, agency_username, agency_password, url_root)
+    return start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root)
 
 
-def _create_red_data(token, agency_url, agency_username, agency_password, url_root):
+def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root):
     """
     Creates the red data that can be used for execution on an agency.
 
-    :param token: The token to reference the notebook.
-    :type token: uuid.UUID
+    :param notebook_id: The token to reference the notebook.
+    :type notebook_id: uuid.UUID
+    :param notebook_token: The token to authorize the notebook.
+    :type notebook_token: uuid.UUID
     :param agency_url: The agency to use for execution
     :type agency_url: str
     :param agency_username: The agency username to use
@@ -115,16 +127,19 @@ def _create_red_data(token, agency_url, agency_username, agency_password, url_ro
     """
     red_data = copy.deepcopy(red_file_template.RED_FILE_TEMPLATE)
 
+    # input notebook
     input_notebook_access = red_data['inputs']['inputNotebook']['connector']['access']
-    input_notebook_access['url'] = url_join(url_root, 'notebooks')
+    input_notebook_access['url'] = url_join(url_root, 'notebook/' + str(notebook_id))
     input_notebook_access['auth']['username'] = agency_username
-    input_notebook_access['auth']['password'] = str(token)
+    input_notebook_access['auth']['password'] = str(notebook_token)
 
+    # output notebook
     output_notebook_access = red_data['outputs']['outputNotebook']['connector']['access']
-    output_notebook_access['url'] = url_join(url_root, 'notebooks')
+    output_notebook_access['url'] = url_join(url_root, 'notebook/' + str(notebook_id))
     output_notebook_access['auth']['username'] = agency_username
-    output_notebook_access['auth']['password'] = str(token)
+    output_notebook_access['auth']['password'] = str(notebook_token)
 
+    # execution engine
     execution_engine_access = red_data['execution']['settings']['access']
     execution_engine_access['url'] = agency_url
     execution_engine_access['auth']['username'] = agency_username
@@ -133,12 +148,14 @@ def _create_red_data(token, agency_url, agency_username, agency_password, url_ro
     return red_data
 
 
-def start_agency(token, agency_url, agency_username, agency_password, url_root):
+def start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root):
     """
     Executes the given notebook on the given agency.
 
-    :param token: The token to reference the notebook.
-    :type token: uuid.UUID
+    :param notebook_id: The id to reference the notebook.
+    :type notebook_id: uuid.UUID
+    :param notebook_token: The token to authorize the notebook.
+    :type notebook_token: uuid.UUID
     :param agency_url: The agency to use for execution
     :type agency_url: str
     :param agency_username: The agency username to use
@@ -153,9 +170,7 @@ def start_agency(token, agency_url, agency_username, agency_password, url_root):
 
     :raise HTTPError: If the red post failed
     """
-    red_data = _create_red_data(token, agency_url, agency_username, agency_password, url_root)
-
-    pprint(red_data)
+    red_data = _create_red_data(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root)
 
     r = requests.post(
         url_join(agency_url, 'red'),
