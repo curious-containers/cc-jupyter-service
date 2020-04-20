@@ -28,7 +28,7 @@ RED_FILE_TEMPLATE = {
         "inputNotebook": {
             "class": "File",
             "connector": {
-                "command": "red-connector-http",
+                "command": "red-connector-http-json",
                 "access": {
                     "url": None,  # replaced with the url of this jupyter service
                     "method": "GET",
@@ -37,7 +37,8 @@ RED_FILE_TEMPLATE = {
                         "password": None,  # replaced with the generated token
                     }
                 }
-            }
+            },
+            "basename": "inputNotebook.ipynb"
         },
         "outputNotebookFilename": "output.ipynb"
     },
