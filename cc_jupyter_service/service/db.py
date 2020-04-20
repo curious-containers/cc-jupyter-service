@@ -54,7 +54,7 @@ class DatabaseAPI:
 
         :raise DatabaseError: If the given notebook_id is not unique or could not be found
         """
-        cur = self.db.execute('SELECT token, username, agencyurl FROM notebook WHERE notebook_id is ?', notebook_id)
+        cur = self.db.execute('SELECT token, username, agencyurl FROM notebook WHERE notebook_id is ?', (notebook_id,))
 
         row = None
         for index, r in enumerate(cur):
