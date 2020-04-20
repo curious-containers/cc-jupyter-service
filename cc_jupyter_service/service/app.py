@@ -2,12 +2,13 @@ import os
 
 from flask import Flask, render_template, request, jsonify
 from requests import HTTPError
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, Unauthorized
 import jsonschema
 import nbformat
 
-import cc_jupyter_service.service.db as database
-from cc_jupyter_service.common.execution import exec_notebook, get_notebook
+from cc_jupyter_service.service.db import DatabaseAPI
+import cc_jupyter_service.service.db as database_module
+from cc_jupyter_service.common.execution import exec_notebook
 from cc_jupyter_service.common.notebook_database import NotebookDatabase
 from cc_jupyter_service.common.schema.request import request_schema
 from cc_jupyter_service.common.conf import Conf
@@ -99,11 +100,19 @@ def create_app():
         :param notebook_id: The id of the notebook
         :type notebook_id: str
         """
-        db = database.get_db()
+        database_api = DatabaseAPI.create()
 
         # validate user
-        notebook_database.get_notebook(notebook_id)
+        try:
+            notebook_token, agency_username, agency_url = database_api.get_notebook(notebook_id)
+        except database_module.DatabaseError as e:
+            raise BadRequest(str(e))
 
-    database.init_app(app)
+        if agency_username != request.authorization['username']:
+            raise Unauthorized('The request username does not match the agency username')
+        if notebook_token != request.authorization['password']:
+            raise Unauthorized('The request password does not match the notebook token')
+
+    database_module.init_app(app)
 
     return app

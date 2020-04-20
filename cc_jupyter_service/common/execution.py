@@ -5,15 +5,7 @@ import requests
 from werkzeug.urls import url_fix, url_join
 
 from cc_jupyter_service.common import red_file_template
-from cc_jupyter_service.service.db import get_db
-
-
-def get_notebook():
-    """
-    Returns the requested notebook data.
-
-    :return:
-    """
+from cc_jupyter_service.service.db import DatabaseAPI
 
 
 def normalize_url(url):
@@ -97,12 +89,8 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
     notebook_token = uuid.uuid4()
     notebook_database.save_notebook(notebook_data, notebook_id)
 
-    db = get_db()
-    db.execute(
-        'INSERT INTO notebook (notebook_id, token, username, agencyurl) VALUES (?, ?, ?, ?)',
-        (str(notebook_id), str(notebook_token), agency_username, agency_url)
-    )
-    db.commit()
+    database_api = DatabaseAPI.create()
+    database_api.insert_notebook(str(notebook_id), str(notebook_token), agency_username, agency_url)
 
     return start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root)
 
