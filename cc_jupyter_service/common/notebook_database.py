@@ -79,4 +79,6 @@ class NotebookDatabase:
         :return: The requested notebook data
         :rtype: object
         """
-        raise NotImplementedError()
+        path = self._notebook_id_to_path(str(notebook_id))
+        with open(path, 'r') as file:
+            return json.load(file)

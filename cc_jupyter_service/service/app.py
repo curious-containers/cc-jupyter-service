@@ -113,6 +113,10 @@ def create_app():
         if notebook_token != request.authorization['password']:
             raise Unauthorized('The request password does not match the notebook token')
 
+        notebook_data = notebook_database.get_notebook(notebook_id)
+
+        return jsonify(notebook_data)
+
     database_module.init_app(app)
 
     return app
