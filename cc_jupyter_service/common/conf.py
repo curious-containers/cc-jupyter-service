@@ -12,14 +12,17 @@ CONFIG_FILE_LOCATIONS = ['cc-agency-jupyter-service-config.yml', '~/.config/cc-j
 
 
 class Conf:
-    def __init__(self, notebook_directory):
+    def __init__(self, notebook_directory, flask_secret_key):
         """
         Creates a new Conf object.
 
         :param notebook_directory: The directory where to save the notebooks
         :type notebook_directory: str
+        :param flask_secret_key: The secret key for flask
+        :type flask_secret_key: str
         """
         self.notebook_directory = notebook_directory
+        self.flask_secret_key = flask_secret_key
 
     @staticmethod
     def from_system():
@@ -29,12 +32,12 @@ class Conf:
         - ./cc-jupyter-service.yml
 
         The first present configuration file will be used.
-        If on configuration file could be found a default configuration will be used.
+        If no configuration file could an ConfigurationError is raised.
 
         :return: The first configuration that was found
         :rtype: Conf
 
-        :raise ConfigurationError: if an invalid configuration file was found
+        :raise ConfigurationError: If an invalid configuration file was found or no configuration file could be found
         """
         for config_location in CONFIG_FILE_LOCATIONS:
             path = os.path.expanduser(config_location)
@@ -45,7 +48,7 @@ class Conf:
             except FileNotFoundError:
                 continue
 
-        return Conf(notebook_directory='notebook_database')
+        raise ConfigurationError('No configuration file could be found')
 
     @staticmethod
     def from_path(path):
@@ -73,7 +76,7 @@ class Conf:
         except jsonschema.ValidationError as e:
             raise ConfigurationError('Invalid config file. {}'.format(e))
 
-        return Conf(notebook_directory=data['notebookDirectory'])
+        return Conf(notebook_directory=data['notebookDirectory'], flask_secret_key=data['flaskSecretKey'])
 
 
 class ConfigurationError(Exception):
