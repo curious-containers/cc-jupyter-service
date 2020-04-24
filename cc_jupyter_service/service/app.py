@@ -65,7 +65,6 @@ def create_app():
             raise BadRequest('Did not send data as json')
 
         request_data = request.json
-
         validate_request(request_data)
 
         if 'localhost' in request.url_root or '127.0.0.1' in request.url_root:
@@ -92,17 +91,25 @@ def create_app():
 
         return jsonify({'experimentIds': experiment_ids})
 
-    @app.route('/notebook/<notebook_id>', methods=['GET'])
-    def notebook(notebook_id):
+    def _validate_user(notebook_id, database_api):
         """
-        Returns the requested notebook.
+        Validates the current request for the given notebook_id. Does the following checks.
 
-        :param notebook_id: The id of the notebook
+        1. Checks if the given notebook_id can be found in the database.
+             If not raises BadRequest.
+        2. Checks whether the notebook_token in the db matches the request authorization password.
+            If not raises Unauthorized.
+        3. Checks whether the agency_username in the db matches the request authorization username.
+            If not raises Unauthorized.
+
+        :param notebook_id: The notebook id to check the request for
         :type notebook_id: str
-        """
-        database_api = DatabaseAPI.create()
+        :param database_api: The database api to use
+        :type database_api: DatabaseAPI
 
-        # validate user
+        :raise BadRequest: If the notebook could not be found
+        :raise Unauthorized: If the username does not match OR the password does not match the notebook_token
+        """
         try:
             notebook_token, agency_username, agency_url = database_api.get_notebook(notebook_id)
         except database_module.DatabaseError as e:
@@ -113,9 +120,31 @@ def create_app():
         if notebook_token != request.authorization['password']:
             raise Unauthorized('The request password does not match the notebook token')
 
+    @app.route('/notebook/<notebook_id>', methods=['GET'])
+    def notebook(notebook_id):
+        """
+        Returns the requested notebook.
+
+        :param notebook_id: The id of the notebook
+        :type notebook_id: str
+        """
+        database_api = DatabaseAPI.create()
+        _validate_user(notebook_id, database_api)
         notebook_data = notebook_database.get_notebook(notebook_id)
 
         return jsonify(notebook_data)
+
+    @app.route('/result/<notebook_id>', methods=['POST'])
+    def post_result(notebook_id):
+        """
+        Endpoint to post the result of the execution
+
+        :param notebook_id: The id of the executed notebook
+        :type notebook_id: str
+        """
+        database_api = DatabaseAPI.create()
+        _validate_user(notebook_id, database_api)
+        notebook_database.save_notebook(request.json, notebook_id, is_result=True)
 
     database_module.init_app(app)
 

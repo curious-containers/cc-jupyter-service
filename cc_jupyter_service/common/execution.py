@@ -8,6 +8,9 @@ from cc_jupyter_service.common import red_file_template
 from cc_jupyter_service.service.db import DatabaseAPI
 
 
+DEFAULT_DOCKER_IMAGE = 'bruno1996/cc_jupyterservice_base_image'
+
+
 def normalize_url(url):
     """
     Adds https:// at the begin and / at the end if missing.
@@ -84,13 +87,13 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
 
     check_agency(agency_url, agency_username, agency_password)
 
-    notebook_id = uuid.uuid4()
+    notebook_id = str(uuid.uuid4())
 
-    notebook_token = uuid.uuid4()
+    notebook_token = str(uuid.uuid4())
     notebook_database.save_notebook(notebook_data, notebook_id)
 
     database_api = DatabaseAPI.create()
-    database_api.insert_notebook(str(notebook_id), str(notebook_token), agency_username, agency_url)
+    database_api.insert_notebook(notebook_id, notebook_token, agency_username, agency_url)
 
     return start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root)
 
@@ -100,9 +103,9 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, a
     Creates the red data that can be used for execution on an agency.
 
     :param notebook_id: The token to reference the notebook.
-    :type notebook_id: uuid.UUID
+    :type notebook_id: str
     :param notebook_token: The token to authorize the notebook.
-    :type notebook_token: uuid.UUID
+    :type notebook_token: str
     :param agency_url: The agency to use for execution
     :type agency_url: str
     :param agency_username: The agency username to use
@@ -117,21 +120,24 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, a
 
     # input notebook
     input_notebook_access = red_data['inputs']['inputNotebook']['connector']['access']
-    input_notebook_access['url'] = url_join(url_root, 'notebook/' + str(notebook_id))
+    input_notebook_access['url'] = url_join(url_root, 'notebook/' + notebook_id)
     input_notebook_access['auth']['username'] = agency_username
-    input_notebook_access['auth']['password'] = str(notebook_token)
+    input_notebook_access['auth']['password'] = notebook_token
 
     # output notebook
     output_notebook_access = red_data['outputs']['outputNotebook']['connector']['access']
-    output_notebook_access['url'] = url_join(url_root, 'notebook/' + str(notebook_id))
+    output_notebook_access['url'] = url_join(url_root, 'notebook/' + notebook_id)
     output_notebook_access['auth']['username'] = agency_username
-    output_notebook_access['auth']['password'] = str(notebook_token)
+    output_notebook_access['auth']['password'] = notebook_token
 
     # execution engine
     execution_engine_access = red_data['execution']['settings']['access']
     execution_engine_access['url'] = agency_url
     execution_engine_access['auth']['username'] = agency_username
     execution_engine_access['auth']['password'] = agency_password
+
+    # docker image
+    red_data['container']['settings']['image']['url'] = DEFAULT_DOCKER_IMAGE
 
     return red_data
 
@@ -141,9 +147,9 @@ def start_agency(notebook_id, notebook_token, agency_url, agency_username, agenc
     Executes the given notebook on the given agency.
 
     :param notebook_id: The id to reference the notebook.
-    :type notebook_id: uuid.UUID
+    :type notebook_id: str
     :param notebook_token: The token to authorize the notebook.
-    :type notebook_token: uuid.UUID
+    :type notebook_token: str
     :param agency_url: The agency to use for execution
     :type agency_url: str
     :param agency_username: The agency username to use

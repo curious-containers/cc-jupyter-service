@@ -61,7 +61,7 @@ RED_FILE_TEMPLATE = {
         "engine": "docker",
         "settings": {
             "image": {
-                "url": "bruno1996/argprinter_image"  # TODO: change image
+                "url": None  # replaced with the image selected by the user
             },
             "ram": 4096
         }
