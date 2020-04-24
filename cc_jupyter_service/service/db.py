@@ -1,8 +1,8 @@
 import sqlite3
-
 import click
 from flask import g, current_app, Flask
 from flask.cli import with_appcontext
+from werkzeug.security import generate_password_hash
 
 
 class DatabaseAPI:
@@ -40,7 +40,7 @@ class DatabaseAPI:
         """
         self.db.execute(
             'INSERT INTO notebook (notebook_id, token, username, agencyurl) VALUES (?, ?, ?, ?)',
-            (notebook_id, notebook_token, agency_username, agency_url)
+            (notebook_id, generate_password_hash(notebook_token), agency_username, agency_url)
         )
         self.db.commit()
 

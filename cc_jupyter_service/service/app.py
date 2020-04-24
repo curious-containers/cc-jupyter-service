@@ -1,8 +1,8 @@
 import os
-
 from flask import Flask, render_template, request, jsonify
 from requests import HTTPError
 from werkzeug.exceptions import BadRequest, Unauthorized
+from werkzeug.security import check_password_hash
 import jsonschema
 import nbformat
 
@@ -117,7 +117,7 @@ def create_app():
 
         if agency_username != request.authorization['username']:
             raise Unauthorized('The request username does not match the agency username')
-        if notebook_token != request.authorization['password']:
+        if not check_password_hash(notebook_token, request.authorization['password']):
             raise Unauthorized('The request password does not match the notebook token')
 
     @app.route('/notebook/<notebook_id>', methods=['GET'])
