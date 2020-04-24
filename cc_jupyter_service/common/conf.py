@@ -36,20 +36,16 @@ class Conf:
 
         :raise ConfigurationError: if an invalid configuration file was found
         """
-        conf = None
         for config_location in CONFIG_FILE_LOCATIONS:
             path = os.path.expanduser(config_location)
             try:
-                conf = Conf.from_path(path)
+                return Conf.from_path(path)
             except ConfigurationError as e:
                 raise ConfigurationError('An invalid configuration file was found at "{}".\n{}'.format(path, str(e)))
             except FileNotFoundError:
                 continue
 
-        if conf is None:
-            conf = Conf(notebook_directory='notebook_database')
-
-        return conf
+        return Conf(notebook_directory='notebook_database')
 
     @staticmethod
     def from_path(path):
