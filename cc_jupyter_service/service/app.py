@@ -146,7 +146,7 @@ def create_app():
         _validate_user(notebook_id, database_api)
         notebook_database.save_notebook(request.json, notebook_id, is_result=True)
 
-        return '', 200
+        return 'notebook submitted'
 
     database_module.init_app(app)
 
