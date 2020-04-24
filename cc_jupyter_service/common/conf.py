@@ -12,7 +12,7 @@ CONFIG_FILE_LOCATIONS = ['cc-agency-jupyter-service-config.yml', '~/.config/cc-j
 
 
 class Conf:
-    def __init__(self, notebook_directory, flask_secret_key):
+    def __init__(self, notebook_directory, flask_secret_key, prevent_localhost):
         """
         Creates a new Conf object.
 
@@ -20,9 +20,12 @@ class Conf:
         :type notebook_directory: str
         :param flask_secret_key: The secret key for flask
         :type flask_secret_key: str
+        :param prevent_localhost: Whether to prevent cc jupyter service to run on localhost or not
+        :type prevent_localhost: bool
         """
         self.notebook_directory = notebook_directory
         self.flask_secret_key = flask_secret_key
+        self.prevent_localhost = prevent_localhost
 
     @staticmethod
     def from_system():
@@ -76,7 +79,11 @@ class Conf:
         except jsonschema.ValidationError as e:
             raise ConfigurationError('Invalid config file. {}'.format(e))
 
-        return Conf(notebook_directory=data['notebookDirectory'], flask_secret_key=data['flaskSecretKey'])
+        return Conf(
+            notebook_directory=data['notebookDirectory'],
+            flask_secret_key=data['flaskSecretKey'],
+            prevent_localhost=data.get('preventLocalhost', True)
+        )
 
 
 class ConfigurationError(Exception):

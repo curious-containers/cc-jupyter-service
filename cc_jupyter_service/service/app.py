@@ -67,7 +67,7 @@ def create_app():
         request_data = request.json
         validate_request(request_data)
 
-        if 'localhost' in request.url_root or '127.0.0.1' in request.url_root:
+        if conf.prevent_localhost and ('localhost' in request.url_root or '127.0.0.1' in request.url_root):
             raise BadRequest(
                 'Cant retrieve public endpoint of this jupyter service. '
                 'Make sure this jupyter service runs not on localhost'
