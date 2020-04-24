@@ -126,7 +126,7 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, a
 
     # output notebook
     output_notebook_access = red_data['outputs']['outputNotebook']['connector']['access']
-    output_notebook_access['url'] = url_join(url_root, 'notebook/' + notebook_id)
+    output_notebook_access['url'] = url_join(url_root, 'result/' + notebook_id)
     output_notebook_access['auth']['username'] = agency_username
     output_notebook_access['auth']['password'] = notebook_token
 
