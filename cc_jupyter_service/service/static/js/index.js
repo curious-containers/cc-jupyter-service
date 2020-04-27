@@ -25,11 +25,23 @@ $(document).ready(function() {
         const main = $('#main');
 
         // drop zone
-        const dropZoneSection = $('<div id="dropZoneSection">');
-        main.append(dropZoneSection);
-        dropZoneSection.append('<header> <h1>Jupyter Notebook</h1> </header>');
-        dropZoneSection.append('<div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>');
-        dropZoneSection.append('<ul id="notebookList"> </ul>');
+        const dropZone = $('<div id="dropZone">');
+        main.append(dropZone);
+        dropZone.append('<header> <h1>Jupyter Notebook</h1> </header>');
+        dropZone.append('<div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>');
+        dropZone.append('<ul id="notebookList"> </ul>');
+
+        dropZone.on("dragover", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+
+        dropZone.on("dragleave", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+
+        dropZone.on('drop', ondropNotebookHandler);
 
         // agency
         const agencySection = $('<div id="agencySection">');
@@ -53,7 +65,55 @@ $(document).ready(function() {
 
         // submit button
         main.append('<br>');
-        main.append('<input type="button" name="submitButton" id="submitButton" value="Execute">');
+        const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">')
+        main.append(submitButton);
+
+        submitButton.click(function() {
+            const agencyUrl = $('#agencyUrl').val();
+            const agencyUsername = $('#agencyUsername').val();
+            const agencyPassword = $('#agencyPassword').val();
+
+            if (agencyUrl === '') {
+                showError('Agency URL is required');
+                return;
+            }
+            if (agencyUsername === '') {
+                showError('Agency Username is required');
+                return;
+            }
+            if (agencyPassword === '') {
+                showError('Agency Password is required');
+                return;
+            }
+
+            if (jupyterNotebookEntries.length === 0) {
+                showError('Upload at least one jupyter notebook');
+                return;
+            }
+
+            // noinspection JSIgnoredPromiseFromCall
+            let url = window.location.href;
+            if (!url.endsWith('/')) {
+                url = url + '/'
+            }
+            url = new URL('executeNotebook', url).href;
+            $.ajax({
+                url,
+                method: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    agencyUrl,
+                    agencyUsername,
+                    agencyPassword,
+                    jupyterNotebooks: jupyterNotebookEntries,
+                    dependencies: []  // TODO: dependencies
+                })
+            }).fail(function (e, statusText, errorMessage) {
+                console.error(errorMessage, e.responseText);
+                showError(e.responseText)
+            })
+        });
     }
 
     function addResultEntry(notebook_id, process_status) {
@@ -112,67 +172,6 @@ $(document).ready(function() {
             reader.readAsText(file);
         }
     }
-
-    const dropZone = $('#dropZone');
-
-    dropZone.on("dragover", function(event) {
-        event.preventDefault();
-        event.stopPropagation();
-    });
-
-    dropZone.on("dragleave", function(event) {
-        event.preventDefault();
-        event.stopPropagation();
-    });
-
-    dropZone.on('drop', ondropNotebookHandler);
-
-    $("#submitButton").click(function() {
-        const agencyUrl = $('#agencyUrl').val();
-        const agencyUsername = $('#agencyUsername').val();
-        const agencyPassword = $('#agencyPassword').val();
-
-        if (agencyUrl === '') {
-            showError('Agency URL is required');
-            return;
-        }
-        if (agencyUsername === '') {
-            showError('Agency Username is required');
-            return;
-        }
-        if (agencyPassword === '') {
-            showError('Agency Password is required');
-            return;
-        }
-
-        if (jupyterNotebookEntries.length === 0) {
-            showError('Upload at least one jupyter notebook');
-            return;
-        }
-
-        // noinspection JSIgnoredPromiseFromCall
-        let url = window.location.href;
-        if (!url.endsWith('/')) {
-            url = url + '/'
-        }
-        url = new URL('executeNotebook', url).href;
-        $.ajax({
-            url,
-            method: 'POST',
-            dataType: 'json',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                agencyUrl,
-                agencyUsername,
-                agencyPassword,
-                jupyterNotebooks: jupyterNotebookEntries,
-                dependencies: []  // TODO: dependencies
-            })
-        }).fail(function (e, statusText, errorMessage) {
-            console.error(errorMessage, e.responseText);
-            showError(e.responseText)
-        })
-    });
 
     showExecutionView();
     // showResultView();
