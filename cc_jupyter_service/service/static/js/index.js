@@ -72,13 +72,6 @@ $(document).ready(function() {
         // submit button
         const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">')
 
-        const main = $('#main');
-        main.append(dropZone);
-        main.append(agencySection);
-        main.append(dependenciesSection);
-        main.append('<br>');
-        main.append(submitButton);
-
         submitButton.click(function() {
             const agencyUrl = $('#agencyUrl').val();
             const agencyUsername = $('#agencyUsername').val();
@@ -125,6 +118,13 @@ $(document).ready(function() {
                 showError(e.responseText)
             })
         });
+
+        const main = $('#main');
+        main.append(dropZone);
+        main.append(agencySection);
+        main.append(dependenciesSection);
+        main.append('<br>');
+        main.append(submitButton);
     }
 
     function addResultEntry(notebook_id, process_status) {
@@ -138,12 +138,12 @@ $(document).ready(function() {
     function showResultView() {
         clearView();
 
-        const main = $('#main');
-
         // result table
         let resultTable = $('<table id="resultTable" style="width:600px">');
-        main.append(resultTable);
         resultTable.append('<tr><th>notebook id</th><th>process status</th><th>download</th></tr>')
+
+        const main = $('#main');
+        main.append(resultTable);
     }
 
     /**
