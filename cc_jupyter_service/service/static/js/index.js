@@ -1,5 +1,8 @@
 $(document).ready(function() {
     class NotebookEntry {
+        data;
+        filename;
+
         constructor(data, filename) {
             this.data = data;
             this.filename = filename;
@@ -7,6 +10,14 @@ $(document).ready(function() {
     }
 
     const jupyterNotebookEntries = [];
+
+    /**
+     * Setup the click events for the navigation bar
+     */
+    function setupNavbar() {
+        $('#ExecutionNavbar').click(showExecutionView);
+        $('#ResultNavbar').click(showResultView);
+    }
 
     /**
      * Removes all elements from the main view
@@ -22,11 +33,8 @@ $(document).ready(function() {
     function showExecutionView() {
         clearView();
 
-        const main = $('#main');
-
         // drop zone
         const dropZone = $('<div id="dropZone">');
-        main.append(dropZone);
         dropZone.append('<header> <h1>Jupyter Notebook</h1> </header>');
         dropZone.append('<div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>');
         dropZone.append('<ul id="notebookList"> </ul>');
@@ -45,7 +53,6 @@ $(document).ready(function() {
 
         // agency
         const agencySection = $('<div id="agencySection">');
-        main.append(agencySection);
         agencySection.append('<header> <h1>Agency Authentication</h1> </header>');
         agencySection.append('<label for="agencyUrl">URL</label><br>');
         agencySection.append('<input name="agencyUrl" id="agencyUrl"><br>');
@@ -56,7 +63,6 @@ $(document).ready(function() {
 
         // dependencies
         const dependenciesSection = $('<div id="dependenciesSection">');
-        main.append(dependenciesSection);
         dependenciesSection.append('<header> <h1>Dependencies</h1> </header>');
         dependenciesSection.append('<input type="checkbox" name="cudaRequired" id="cudaRequired" checked="checked">');
         dependenciesSection.append('<label for="cudaRequired">CUDA</label><br>');
@@ -64,8 +70,13 @@ $(document).ready(function() {
         dependenciesSection.append('<label for="tensorflowRequired">Tensorflow</label>');
 
         // submit button
-        main.append('<br>');
         const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">')
+
+        const main = $('#main');
+        main.append(dropZone);
+        main.append(agencySection);
+        main.append(dependenciesSection);
+        main.append('<br>');
         main.append(submitButton);
 
         submitButton.click(function() {
@@ -172,6 +183,8 @@ $(document).ready(function() {
             reader.readAsText(file);
         }
     }
+
+    setupNavbar();
 
     showExecutionView();
     // showResultView();
