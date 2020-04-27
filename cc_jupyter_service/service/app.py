@@ -54,7 +54,7 @@ def create_app():
 
     @app.route('/', methods=['GET'])
     def get_root():
-        return render_template('hello.html')
+        return render_template('index.html')
 
     @app.route('/executeNotebook', methods=['POST'])
     def execute_notebook():
