@@ -8,7 +8,7 @@ from cc_jupyter_service.common.schema.configuration import configuration_schema
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 
-CONFIG_FILE_LOCATIONS = ['cc-agency-jupyter-service-config.yml', '~/.config/cc-jupyter-service.yml']
+CONFIG_FILE_LOCATIONS = ['cc-jupyter-service-config.yml', '~/.config/cc-jupyter-service.yml']
 
 
 class Conf:
@@ -51,7 +51,7 @@ class Conf:
             except FileNotFoundError:
                 continue
 
-        raise ConfigurationError('No configuration file could be found')
+        raise ConfigurationError('No configuration file could be found. Looked at {}'.format(CONFIG_FILE_LOCATIONS))
 
     @staticmethod
     def from_path(path):
