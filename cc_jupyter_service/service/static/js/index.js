@@ -1,4 +1,13 @@
 $(document).ready(function() {
+    class NotebookEntry {
+        constructor(data, filename) {
+            this.data = data;
+            this.filename = filename;
+        }
+    }
+
+    const jupyterNotebookEntries = [];
+
     /**
      * Removes all elements from the main view
      */
@@ -75,21 +84,6 @@ $(document).ready(function() {
         $('#messages').append('<div class="flash">' + errorMessage + '</div>');
     }
 
-    const jupyterNotebooks = [];
-
-    /**
-     * Creates a new NotebookEntry.
-     *
-     * @param notebookData The json data of the notebook
-     * @param filename The notebook filename
-     */
-    function createNotebookEntry(notebookData, filename) {
-        return {
-            'data': notebookData,
-            'filename': filename
-        }
-    }
-
     /**
      * Callback for Notebook drop. This function loads all dropped jupyter notebooks and
      * appends it to the notebookList.
@@ -112,7 +106,7 @@ $(document).ready(function() {
                     showError('Error while decoding notebook. ' + error);
                     return;
                 }
-                jupyterNotebooks.push(createNotebookEntry(json, file.name));
+                jupyterNotebookEntries.push(new NotebookEntry(json, file.name));
                 notebookList.append('<li>' + file.name + '</li>');
             };
             reader.readAsText(file);
@@ -151,7 +145,7 @@ $(document).ready(function() {
             return;
         }
 
-        if (jupyterNotebooks.length === 0) {
+        if (jupyterNotebookEntries.length === 0) {
             showError('Upload at least one jupyter notebook');
             return;
         }
@@ -171,12 +165,9 @@ $(document).ready(function() {
                 agencyUrl,
                 agencyUsername,
                 agencyPassword,
-                jupyterNotebooks,
+                jupyterNotebooks: jupyterNotebookEntries,
                 dependencies: []  // TODO: dependencies
             })
-        }).done(function(data) {
-            console.log('success');
-            console.log(data);
         }).fail(function (e, statusText, errorMessage) {
             console.error(errorMessage, e.responseText);
             showError(e.responseText)
