@@ -6,14 +6,14 @@ from flask import g
 from werkzeug.urls import url_join
 
 from cc_jupyter_service.common import red_file_template
-from cc_jupyter_service.common.helper import normalize_url, check_agency
+from cc_jupyter_service.common.helper import normalize_url, check_agency, AUTHORIZATION_COOKIE_KEY
 from cc_jupyter_service.service.db import DatabaseAPI
 
 
 DEFAULT_DOCKER_IMAGE = 'bruno1996/cc_jupyterservice_base_image'
 
 
-def exec_notebook(notebook_data, agency_url, agency_username, agency_password, notebook_database, url_root):
+def exec_notebook(notebook_data, agency_url, agency_username, agency_authorization_cookie, notebook_database, url_root):
     """
     - Validates the agency authentication information
     - Generates a new id and token for the notebook
@@ -26,8 +26,8 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
     :type agency_url: str
     :param agency_username: The agency username to use
     :type agency_username: str
-    :param agency_password: The password for the given agency user
-    :type agency_password: str
+    :param agency_authorization_cookie: The authorization cookie for the given agency user
+    :type agency_authorization_cookie: str
     :param notebook_database: The notebook database to save the notebook in
     :type notebook_database: NotebookDatabase
     :param url_root: The url root of this notebook service
@@ -38,7 +38,7 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
     """
     agency_url = normalize_url(agency_url)
 
-    check_agency(agency_url, agency_username, agency_password)
+    # check_agency(agency_url, agency_username, agency_password)
 
     notebook_id = str(uuid.uuid4())
 
@@ -48,10 +48,10 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_password, n
     database_api = DatabaseAPI.create()
     database_api.create_notebook(notebook_id, notebook_token, g.user.user_id)
 
-    return start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root)
+    return start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root)
 
 
-def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root):
+def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root):
     """
     Creates the red data that can be used for execution on an agency.
 
@@ -63,8 +63,6 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, a
     :type agency_url: str
     :param agency_username: The agency username to use
     :type agency_username: str
-    :param agency_password: The password for the given agency user
-    :type agency_password: str
     :param url_root: The url root of this notebook service
     :type url_root: str
     :return: The red data filled with the given information to execute on an agency
@@ -87,7 +85,7 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, a
     execution_engine_access = red_data['execution']['settings']['access']
     execution_engine_access['url'] = agency_url
     execution_engine_access['auth']['username'] = agency_username
-    execution_engine_access['auth']['password'] = agency_password
+    execution_engine_access['auth']['password'] = ''  # We dont need this, since we do authorization by cookie
 
     # docker image
     red_data['container']['settings']['image']['url'] = DEFAULT_DOCKER_IMAGE
@@ -95,7 +93,7 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, a
     return red_data
 
 
-def start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root):
+def start_agency(notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root):
     """
     Executes the given notebook on the given agency.
 
@@ -107,8 +105,8 @@ def start_agency(notebook_id, notebook_token, agency_url, agency_username, agenc
     :type agency_url: str
     :param agency_username: The agency username to use
     :type agency_username: str
-    :param agency_password: The password for the given agency user
-    :type agency_password: str
+    :param authorization_cookie: The authorization cookie for the given agency user
+    :type authorization_cookie: str
     :param url_root: The url root of this notebook service
     :type url_root: str
 
@@ -117,11 +115,11 @@ def start_agency(notebook_id, notebook_token, agency_url, agency_username, agenc
 
     :raise HTTPError: If the red post failed
     """
-    red_data = _create_red_data(notebook_id, notebook_token, agency_url, agency_username, agency_password, url_root)
+    red_data = _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root)
 
     r = requests.post(
         url_join(agency_url, 'red'),
-        auth=(agency_username, agency_password),
+        cookies={AUTHORIZATION_COOKIE_KEY: authorization_cookie},
         json=red_data
     )
 

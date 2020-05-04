@@ -38,6 +38,22 @@ class DatabaseAPI:
             self.notebook_token = notebook_token
             self.user_id = user_id
 
+    class Cookie:
+        def __init__(self, db_id, cookie_text, user_id):
+            """
+            Creates a Cookie.
+
+            :param db_id: The database id of this cookie
+            :type db_id: int
+            :param cookie_text: The text of the cookie
+            :type cookie_text: str
+            :param user_id: The owning user id
+            :type user_id: int
+            """
+            self.db_id = db_id
+            self.cookie_text = cookie_text
+            self.user_id = user_id
+
     def __init__(self, db):
         """
         Initializes a new DatabaseAPI.
@@ -149,6 +165,42 @@ class DatabaseAPI:
             return None
 
         return DatabaseAPI.User(user_data[0], user_data[1], user_data[2])
+
+    def create_cookie(self, cookie_text, user_id):
+        """
+        Creates a new user.
+
+        :param cookie_text: The text of the cookie
+        :type cookie_text: str
+        :param user_id: The id of the user
+        :type user_id: int
+
+        :return: The id of the created cookie
+        :rtype: int
+        """
+        cur = self.db.cursor()
+        cur.execute(
+            'INSERT INTO cookie (cookie_text, user_id) VALUES (?, ?)', (cookie_text, user_id)
+        )
+        self.db.commit()
+        return cur.lastrowid
+
+    def get_cookies(self, user_id):
+        """
+        Gets the cookies of the given user.
+
+        :param user_id: The user id
+        :type user_id: int
+        :return: The list of cookies of the given user
+        """
+        cur = self.db.execute(
+            'SELECT id, cookie_text, user_id FROM cookie WHERE user_id is ?',
+            (user_id,)
+        )
+        cookies = []
+        for cookie in cur:
+            cookies.append(DatabaseAPI.Cookie(cookie[0], cookie[1], cookie[2]))
+        return cookies
 
 
 def get_db():

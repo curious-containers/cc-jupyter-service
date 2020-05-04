@@ -1,9 +1,6 @@
 request_schema = {
     'type': 'object',
     'properties': {
-        'agencyUrl': {'type': 'string'},
-        'agencyUsername': {'type': 'string'},
-        'agencyPassword': {'type': 'string'},
         'jupyterNotebooks': {
             'type': 'array',
             'items': {
@@ -17,5 +14,5 @@ request_schema = {
         'dependencies': {'type': 'array'}
     },
     'additionalProperties': False,
-    'required': ['agencyUrl', 'agencyUsername', 'agencyPassword', 'jupyterNotebooks', 'dependencies']
+    'required': ['jupyterNotebooks', 'dependencies']
 }

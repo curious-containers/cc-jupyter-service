@@ -20,7 +20,7 @@ CREATE TABLE notebook (
 
 CREATE TABLE cookie (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  cookie TEXT NOT NULL,
+  cookie_text TEXT NOT NULL,
   user_id INTEGER,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );

@@ -51,16 +51,6 @@ $(document).ready(function() {
 
         dropZone.on('drop', ondropNotebookHandler);
 
-        // agency
-        const agencySection = $('<div id="agencySection">');
-        agencySection.append('<header> <h1>Agency Authentication</h1> </header>');
-        agencySection.append('<label for="agencyUrl">URL</label><br>');
-        agencySection.append('<input name="agencyUrl" id="agencyUrl"><br>');
-        agencySection.append('<label for="agencyUsername">Username</label><br>');
-        agencySection.append('<input name="agencyUsername" id="agencyUsername"><br>');
-        agencySection.append('<label for="agencyPassword">Password</label><br>');
-        agencySection.append('<input type="password" name="agencyPassword" id="agencyPassword">');
-
         // dependencies
         const dependenciesSection = $('<div id="dependenciesSection">');
         dependenciesSection.append('<header> <h1>Dependencies</h1> </header>');
@@ -73,23 +63,6 @@ $(document).ready(function() {
         const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">')
 
         submitButton.click(function() {
-            const agencyUrl = $('#agencyUrl').val();
-            const agencyUsername = $('#agencyUsername').val();
-            const agencyPassword = $('#agencyPassword').val();
-
-            if (agencyUrl === '') {
-                showError('Agency URL is required');
-                return;
-            }
-            if (agencyUsername === '') {
-                showError('Agency Username is required');
-                return;
-            }
-            if (agencyPassword === '') {
-                showError('Agency Password is required');
-                return;
-            }
-
             if (jupyterNotebookEntries.length === 0) {
                 showError('Upload at least one jupyter notebook');
                 return;
@@ -107,9 +80,6 @@ $(document).ready(function() {
                 dataType: 'json',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    agencyUrl,
-                    agencyUsername,
-                    agencyPassword,
                     jupyterNotebooks: jupyterNotebookEntries,
                     dependencies: []  // TODO: dependencies
                 })
@@ -121,16 +91,17 @@ $(document).ready(function() {
 
         const main = $('#main');
         main.append(dropZone);
-        main.append(agencySection);
         main.append(dependenciesSection);
         main.append('<br>');
         main.append(submitButton);
     }
 
+    /*
     function addResultEntry(notebook_id, process_status) {
         const resultTable = $('#resultTable');
         resultTable.append('<tr><td>' + notebook_id + '</td><td>' + process_status + '</td><td><button>download</button></td></tr>')
     }
+     */
 
     /**
      * Creates the html elements for the result view and inserts them into the main div.

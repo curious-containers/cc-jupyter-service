@@ -16,19 +16,25 @@ def login():
         agency_password = request.form['agencyPassword']
 
         error = None
+        authorization_cookie = None
         try:
-            check_agency(agency_url, agency_username, agency_password)
+            authorization_cookie = check_agency(agency_url, agency_username, agency_password)
         except AgencyError as e:
             error = str(e)
 
         database_api = DatabaseAPI.create()
 
         if error is None:
+            # get/create user
             user = database_api.get_user(agency_username=agency_username)
             if user is None:
                 user_id = database_api.create_user(agency_username, agency_url)
             else:
                 user_id = user.user_id
+
+            # save authorization cookie
+            if authorization_cookie is not None:
+                database_api.create_cookie(authorization_cookie, user_id)
 
             session.clear()
             session['user_id'] = user_id

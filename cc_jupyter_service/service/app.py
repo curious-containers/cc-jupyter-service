@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, g
 from requests import HTTPError
 from werkzeug.exceptions import BadRequest, NotFound, Unauthorized
 import jsonschema
@@ -80,13 +80,18 @@ def create_app():
 
         experiment_ids = []
 
+        user = g.user
+
+        database_api = DatabaseAPI.create()
+        agency_authorization_cookie = database_api.get_cookies(user.user_id)[0]  # TODO: refine
+
         for jupyter_notebook in request_data['jupyterNotebooks']:
             try:
                 experiment_id = exec_notebook(
                     jupyter_notebook['data'],
-                    agency_url=request_data['agencyUrl'],
-                    agency_username=request_data['agencyUsername'],
-                    agency_password=request_data['agencyPassword'],
+                    agency_url=user.agency_url,
+                    agency_username=user.agency_username,
+                    agency_authorizationcookie=agency_authorization_cookie,
                     notebook_database=notebook_database,
                     url_root=request.url_root
                 )
