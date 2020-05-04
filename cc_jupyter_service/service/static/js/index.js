@@ -28,6 +28,19 @@ $(document).ready(function() {
     }
 
     /**
+     * Returns the url for the given endpoint
+     *
+     * @param endpoint The endpoint as string
+     */
+    function getUrl(endpoint) {
+        let url = window.location.href;
+        if (!url.endsWith('/')) {
+            url = url + '/'
+        }
+        return new URL(endpoint, url).href;
+    }
+
+    /**
      * Creates the html elements for the execution view and inserts them into the main div.
      */
     function showExecutionView() {
@@ -69,11 +82,7 @@ $(document).ready(function() {
             }
 
             // noinspection JSIgnoredPromiseFromCall
-            let url = window.location.href;
-            if (!url.endsWith('/')) {
-                url = url + '/'
-            }
-            url = new URL('executeNotebook', url).href;
+            let url = getUrl('executeNotebook');
             $.ajax({
                 url,
                 method: 'POST',
@@ -96,12 +105,10 @@ $(document).ready(function() {
         main.append(submitButton);
     }
 
-    /*
     function addResultEntry(notebook_id, process_status) {
         const resultTable = $('#resultTable');
         resultTable.append('<tr><td>' + notebook_id + '</td><td>' + process_status + '</td><td><button>download</button></td></tr>')
     }
-     */
 
     /**
      * Creates the html elements for the result view and inserts them into the main div.
@@ -115,6 +122,24 @@ $(document).ready(function() {
 
         const main = $('#main');
         main.append(resultTable);
+
+        refreshResults();
+    }
+
+    /**
+     * Updates the result table entries by fetching the results
+     */
+    function refreshResults() {
+        let url = getUrl('list_results')
+        $.ajax({
+            url,
+            method: 'GET',
+            dataType: 'json',
+        }).done(function (data, statusText, jqXHR) {
+            for (let entry of data) {
+                addResultEntry(entry.notebook_id, entry.process_status);
+            }
+        });
     }
 
     /**

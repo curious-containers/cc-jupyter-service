@@ -127,6 +127,25 @@ def create_app():
 
         return 'notebook submitted'
 
+    @app.route('/list_results')
+    @auth.login_required
+    def list_results():
+        """
+        Endpoint that produces a json list, that lists all experiments for the current user.
+        Every entry has a Notebook id and a process status
+
+        :return: A json list, describing the experiments
+        """
+        database_api = DatabaseAPI.create()
+
+        entries = []
+        for notebook in database_api.get_notebooks(g.user.user_id):
+            entries.append({
+                'notebook_id': notebook.notebook_id,
+                'process_status': 'nice'
+            })
+        return jsonify(entries)
+
     database_module.init_app(app)
 
     return app

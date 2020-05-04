@@ -116,6 +116,30 @@ class DatabaseAPI:
 
         return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3])
 
+    def get_notebooks(self, user_id):
+        """
+        Returns a list of notebook executed by the given user
+
+        :param user_id: The user id of the executing user
+        :type user_id: int
+        :return: List of Notebooks
+        :rtype: list[DatabaseAPI.Notebook]
+        """
+        cur = self.db.execute(
+            'SELECT id, notebook_id, notebook_token, user_id FROM notebook WHERE user_id is ?',
+            (user_id,)
+        )
+
+        notebooks = []
+        for notebook_data in cur:
+            notebooks.append(DatabaseAPI.Notebook(
+                notebook_data[0],
+                notebook_data[1],
+                notebook_data[2],
+                notebook_data[3]
+            ))
+        return notebooks
+
     def create_user(self, agency_username, agency_url):
         """
         Creates a new user.
