@@ -5,7 +5,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, sessi
 from cc_jupyter_service.common.helper import normalize_url, check_agency, AgencyError
 from cc_jupyter_service.service.db import DatabaseAPI
 
-bp = Blueprint('auth', __name__)
+bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @bp.route('/login', methods=['GET', 'POST'])
@@ -53,7 +53,7 @@ def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
 
         return view(**kwargs)
     return wrapped_view
