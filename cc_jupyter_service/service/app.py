@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, jsonify, g
+from flask import Flask, render_template, request, jsonify, g, Response
 from requests import HTTPError
 from werkzeug.exceptions import BadRequest, NotFound, Unauthorized
 import jsonschema
@@ -126,6 +126,32 @@ def create_app():
         notebook_database.save_notebook(request.json, notebook_id, is_result=True)
 
         return 'notebook submitted'
+
+    @app.route('/result/<notebook_id>', methods=['GET'])
+    @auth.login_required
+    def get_result(notebook_id):
+        """
+        Gets the result of the given notebook id.
+
+        :param notebook_id:
+        :return:
+        """
+        if notebook_database.check_notebook(notebook_id, True):
+            def generate():
+                with notebook_database.open_notebook_file(notebook_id, is_result=True) as notebook_file:
+                    while True:
+                        block = notebook_file.read(1024*1024)
+                        if not block:
+                            break
+                        yield block
+            response = Response(generate(), mimetype='application/json')
+            response.headers["Content-Disposition"] = "attachment; filename=result.ipynb"
+            response.headers["Content-Length"] = os.path.getsize(
+                notebook_database.notebook_id_to_path(notebook_id, is_result=True)
+            )
+            return response
+        else:
+            raise NotFound()
 
     @app.route('/list_results')
     @auth.login_required

@@ -44,7 +44,7 @@ class NotebookDatabase:
         if not os.path.isdir(database_directory):
             os.makedirs(database_directory)
 
-    def _notebook_id_to_path(self, notebook_id, is_result):
+    def notebook_id_to_path(self, notebook_id, is_result):
         """
         Returns the path of the requested notebook.
 
@@ -72,9 +72,22 @@ class NotebookDatabase:
         :return: A NotebookCursor pointing to the created file
         :rtype: NotebookCursor
         """
-        path = self._notebook_id_to_path(notebook_id, is_result)
+        path = self.notebook_id_to_path(notebook_id, is_result)
         with open(path, 'w') as file:
             json.dump(notebook_data, file)
+
+    def check_notebook(self, notebook_id, is_result=False):
+        """
+        Returns whether the given notebook is present.
+
+        :param notebook_id: The id of the notebook
+        :type notebook_id: str
+        :param is_result: If set to true, the result notebook will be checked
+        :type is_result: bool
+        :return: True, if the notebook is present, otherwise False
+        """
+        path = self.notebook_id_to_path(notebook_id, is_result)
+        return os.path.isfile(path)
 
     def get_notebook(self, notebook_id, is_result=False):
         """
@@ -87,6 +100,20 @@ class NotebookDatabase:
         :return: The requested notebook data
         :rtype: object
         """
-        path = self._notebook_id_to_path(str(notebook_id), is_result)
+        path = self.notebook_id_to_path(notebook_id, is_result)
         with open(path, 'r') as file:
             return json.load(file)
+
+    def open_notebook_file(self, notebook_id, is_result=False):
+        """
+        Returns a file object, that contains the given notebook
+
+        :param notebook_id: The notebook to open
+        :type notebook_id: str
+        :param is_result: Whether the result notebook should be opened
+        :type is_result: bool
+        :return: A file object
+        :rtype: o
+        """
+        path = self.notebook_id_to_path(notebook_id, is_result)
+        return open(path, 'r')

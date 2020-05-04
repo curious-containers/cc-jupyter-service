@@ -105,9 +105,16 @@ $(document).ready(function() {
         main.append(submitButton);
     }
 
-    function addResultEntry(notebook_id, process_status) {
+    function addResultEntry(notebookId, processStatus) {
         const resultTable = $('#resultTable');
-        resultTable.append('<tr><td>' + notebook_id + '</td><td>' + process_status + '</td><td><button>download</button></td></tr>')
+        let row = $('<tr><td>' + notebookId + '</td><td>' + processStatus + '</td><td></td></tr>');
+        let downloadButton = $('<button>download</button>');
+        downloadButton.click(function (a) {
+            window.open(getUrl('result/' + notebookId), '_blank');
+        })
+        row.append(downloadButton);
+
+        resultTable.append(row);
     }
 
     /**
@@ -118,7 +125,7 @@ $(document).ready(function() {
 
         // result table
         let resultTable = $('<table id="resultTable" style="width:600px">');
-        resultTable.append('<tr><th>notebook id</th><th>process status</th><th>download</th></tr>')
+        resultTable.append('<tr><th>Notebook ID</th><th>Status</th><th>Result</th></tr>')
 
         const main = $('#main');
         main.append(resultTable);
@@ -137,7 +144,7 @@ $(document).ready(function() {
             dataType: 'json',
         }).done(function (data, statusText, jqXHR) {
             for (let entry of data) {
-                addResultEntry(entry.notebook_id, entry.process_status);
+                addResultEntry(entry['notebook_id'], entry['process_status']);
             }
         });
     }
