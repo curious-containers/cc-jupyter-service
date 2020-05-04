@@ -91,7 +91,7 @@ def create_app():
                     jupyter_notebook['data'],
                     agency_url=user.agency_url,
                     agency_username=user.agency_username,
-                    agency_authorizationcookie=agency_authorization_cookie,
+                    agency_authorization_cookie=agency_authorization_cookie,
                     notebook_database=notebook_database,
                     url_root=request.url_root
                 )
