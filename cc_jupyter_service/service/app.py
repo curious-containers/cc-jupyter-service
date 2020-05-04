@@ -83,7 +83,7 @@ def create_app():
         user = g.user
 
         database_api = DatabaseAPI.create()
-        agency_authorization_cookie = database_api.get_cookies(user.user_id)[0]  # TODO: refine
+        agency_authorization_cookie = database_api.get_cookies(user.user_id)[0]  # TODO: choose cookie
 
         for jupyter_notebook in request_data['jupyterNotebooks']:
             try:
@@ -91,7 +91,7 @@ def create_app():
                     jupyter_notebook['data'],
                     agency_url=user.agency_url,
                     agency_username=user.agency_username,
-                    agency_authorization_cookie=agency_authorization_cookie,
+                    agency_authorization_cookie=agency_authorization_cookie.cookie_text,
                     notebook_database=notebook_database,
                     url_root=request.url_root
                 )
