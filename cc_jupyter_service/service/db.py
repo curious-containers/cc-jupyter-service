@@ -6,6 +6,38 @@ from werkzeug.security import generate_password_hash
 
 
 class DatabaseAPI:
+    class User:
+        def __init__(self, user_id, agency_username, agency_url):
+            """
+            Creates a new Database User.
+
+            :type user_id: int
+            :type agency_username: str
+            :type agency_url: str
+            """
+            self.user_id = user_id
+            self.agency_username = agency_username
+            self.agency_url = agency_url
+
+    class Notebook:
+        def __init__(self, db_id, notebook_id, notebook_token, user_id):
+            """
+            Creates a Notebook.
+
+            :param db_id: The db id
+            :type db_id: int
+            :param notebook_id: The notebook id
+            :type notebook_id: str
+            :param notebook_token: The token for this notebook
+            :type notebook_token: str
+            :param user_id: The user id that executed this notebook
+            :type user_id: int
+            """
+            self.db_id = db_id
+            self.notebook_id = notebook_id
+            self.notebook_token = notebook_token
+            self.user_id = user_id
+
     def __init__(self, db):
         """
         Initializes a new DatabaseAPI.
@@ -25,7 +57,7 @@ class DatabaseAPI:
         """
         return DatabaseAPI(get_db())
 
-    def insert_notebook(self, notebook_id, notebook_token, agency_username, agency_url):
+    def create_notebook(self, notebook_id, notebook_token, user_id):
         """
         Inserts the given notebook information into the db.
 
@@ -33,14 +65,12 @@ class DatabaseAPI:
         :type notebook_id: str
         :param notebook_token: The authentication token for the notebook
         :type notebook_token: str
-        :param agency_username: The agency username
-        :type agency_username: str
-        :param agency_url: The agency url
-        :type agency_url: str
+        :param user_id: The id of the user
+        :type user_id: int
         """
         self.db.execute(
-            'INSERT INTO notebook (notebook_id, token, username, agencyurl) VALUES (?, ?, ?, ?)',
-            (notebook_id, generate_password_hash(notebook_token), agency_username, agency_url)
+            'INSERT INTO notebook (notebook_id, notebook_token, user_id) VALUES (?, ?, ?)',
+            (notebook_id, generate_password_hash(notebook_token), user_id)
         )
         self.db.commit()
 
@@ -49,12 +79,15 @@ class DatabaseAPI:
         Returns information about the notebook
 
         :param notebook_id: The id of the notebook
-        :return: A tuple containing (notebook_token, agency_username, agency_url)
-        :rtype: tuple[str, str, str]
+        :return: The requested Notebook
+        :rtype: DatabaseAPI.Notebook
 
         :raise DatabaseError: If the given notebook_id is not unique or could not be found
         """
-        cur = self.db.execute('SELECT token, username, agencyurl FROM notebook WHERE notebook_id is ?', (notebook_id,))
+        cur = self.db.execute(
+            'SELECT id, notebook_id, notebook_token, user_id FROM notebook WHERE notebook_id is ?',
+            (notebook_id,)
+        )
 
         row = None
         for index, r in enumerate(cur):
@@ -65,7 +98,57 @@ class DatabaseAPI:
         if row is None:
             raise DatabaseError('NotebookID "{}" could not be found'.format(notebook_id))
 
-        return row
+        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3])
+
+    def create_user(self, agency_username, agency_url):
+        """
+        Creates a new user.
+
+        :param agency_username: The username valid for an agency
+        :type agency_username: str
+        :param agency_url: The url for the agency of this user
+        :type agency_url: str
+        :return: The id of the created user
+        :rtype: int
+        """
+        cur = self.db.cursor()
+        cur.execute(
+            'INSERT INTO user (agency_username, agency_url) VALUES (?, ?)', (agency_username, agency_url)
+        )
+        self.db.commit()
+        return cur.lastrowid
+
+    def get_user(self, user_id=None, agency_username=None):
+        """
+        Gets a user by id or agency username. At least one of both should be given. If both are given agency username is
+        ignored.
+
+        :param user_id: The user id
+        :type user_id: int
+        :param agency_username: The agency username of the user
+        :type agency_username: str
+        :return: The user, if available. Otherwise None.
+        :rtype: DatabaseAPI.User or None
+
+        :raise ValueError: If user_id and agency_username is None
+        """
+        if user_id is not None:
+            cur = self.db.execute(
+                'SELECT id, agency_username, agency_url FROM user WHERE id is ?',
+                (user_id,)
+            )
+        elif agency_username is not None:
+            cur = self.db.execute(
+                'SELECT id, agency_username, agency_url FROM user WHERE agency_username is ?',
+                (agency_username,)
+            )
+        else:
+            raise ValueError('user id and agency username are None')
+        user_data = cur.fetchone()
+        if user_data is None:
+            return None
+
+        return DatabaseAPI.User(user_data[0], user_data[1], user_data[2])
 
 
 def get_db():

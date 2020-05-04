@@ -1,11 +1,26 @@
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS post;
-DROP TABLE IF EXISTS  notebook;
+DROP TABLE IF EXISTS notebook;
+DROP TABLE IF EXISTS experiment;
+DROP TABLE IF EXISTS cookie;
+
+CREATE TABLE user (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  agency_username TEXT NOT NULL,
+  agency_url TEXT NOT NULL
+);
 
 CREATE TABLE notebook (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   notebook_id TEXT UNIQUE NOT NULL,
-  token TEXT UNIQUE NOT NULL,
-  username TEXT NOT NULL,
-  agencyurl TEXT NOT NULL
+  notebook_token TEXT UNIQUE NOT NULL,
+  user_id INTEGER,
+  FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+CREATE TABLE cookie (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cookie TEXT NOT NULL,
+  user_id INTEGER,
+  FOREIGN KEY (user_id) REFERENCES user (id)
 );
