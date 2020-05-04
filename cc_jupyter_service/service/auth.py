@@ -11,9 +11,9 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        agency_url = normalize_url(request.form['agency_url'])
-        agency_username = request.form['username']
-        agency_password = request.form['password']
+        agency_url = normalize_url(request.form['agencyUrl'])
+        agency_username = request.form['agencyUsername']
+        agency_password = request.form['agencyPassword']
 
         error = None
         try:
