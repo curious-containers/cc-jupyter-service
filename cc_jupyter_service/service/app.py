@@ -57,7 +57,7 @@ def create_app():
 
     @app.route('/', methods=['GET'])
     @auth.login_required
-    def get_root():
+    def root():
         return render_template('index.html')
 
     @app.route('/executeNotebook', methods=['POST'])

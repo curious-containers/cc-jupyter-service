@@ -32,7 +32,7 @@ def login():
 
             session.clear()
             session['user_id'] = user_id
-            return redirect(url_for('/'))
+            return redirect(url_for('root'))
 
         flash(error)
     return render_template('login.html')
