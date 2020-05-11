@@ -1,3 +1,5 @@
+import enum
+
 import sqlite3
 import click
 from flask import g, current_app, Flask
@@ -20,7 +22,7 @@ class DatabaseAPI:
             self.agency_url = agency_url
 
     class Notebook:
-        def __init__(self, db_id, notebook_id, notebook_token, user_id):
+        def __init__(self, db_id, notebook_id, notebook_token, status, user_id):
             """
             Creates a Notebook.
 
@@ -30,12 +32,15 @@ class DatabaseAPI:
             :type notebook_id: str
             :param notebook_token: The token for this notebook
             :type notebook_token: str
+            :param status: The processing status of this notebook
+            :type status: DatabaseAPI.NotebookStatus
             :param user_id: The user id that executed this notebook
             :type user_id: int
             """
             self.db_id = db_id
             self.notebook_id = notebook_id
             self.notebook_token = notebook_token
+            self.status = status
             self.user_id = user_id
 
     class Cookie:
@@ -53,6 +58,14 @@ class DatabaseAPI:
             self.db_id = db_id
             self.cookie_text = cookie_text
             self.user_id = user_id
+
+    class NotebookStatus(enum.IntEnum):
+        PROCESSING = 0
+        SUCCEEDED = 1
+        FAILED = 2
+
+        def __str__(self):
+            self.name.lower()
 
     def __init__(self, db):
         """
@@ -73,7 +86,7 @@ class DatabaseAPI:
         """
         return DatabaseAPI(get_db())
 
-    def create_notebook(self, notebook_id, notebook_token, user_id):
+    def create_notebook(self, notebook_id, notebook_token, user_id, status=NotebookStatus.PROCESSING):
         """
         Inserts the given notebook information into the db.
 
@@ -83,10 +96,27 @@ class DatabaseAPI:
         :type notebook_token: str
         :param user_id: The id of the user
         :type user_id: int
+        :param status: The initial status of the notebook. Defaults to PROCESSING
+        :type status: DatabaseAPI.NotebookStatus
         """
         self.db.execute(
-            'INSERT INTO notebook (notebook_id, notebook_token, user_id) VALUES (?, ?, ?)',
+            'INSERT INTO notebook (notebook_id, notebook_token, status, user_id) VALUES (?, ?, ?, ?)',
             (notebook_id, generate_password_hash(notebook_token), user_id)
+        )
+        self.db.commit()
+
+    def update_notebook_status(self, notebook_id, status):
+        """
+        Updates the status of the given notebook
+
+        :param notebook_id: The id of the notebook
+        :type notebook_id: str
+        :param status: The status to set
+        :type status: DatabaseAPI.NotebookStatus
+        """
+        self.db.execute(
+            'UPDATE notebook SET status = (?) WHERE notebook_id is ?',
+            (status, notebook_id)
         )
         self.db.commit()
 
@@ -101,7 +131,7 @@ class DatabaseAPI:
         :raise DatabaseError: If the given notebook_id is not unique or could not be found
         """
         cur = self.db.execute(
-            'SELECT id, notebook_id, notebook_token, user_id FROM notebook WHERE notebook_id is ?',
+            'SELECT id, notebook_id, notebook_token, status, user_id FROM notebook WHERE notebook_id is ?',
             (notebook_id,)
         )
 
@@ -114,7 +144,7 @@ class DatabaseAPI:
         if row is None:
             raise DatabaseError('NotebookID "{}" could not be found'.format(notebook_id))
 
-        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3])
+        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4])
 
     def get_notebooks(self, user_id):
         """
@@ -126,7 +156,7 @@ class DatabaseAPI:
         :rtype: list[DatabaseAPI.Notebook]
         """
         cur = self.db.execute(
-            'SELECT id, notebook_id, notebook_token, user_id FROM notebook WHERE user_id is ?',
+            'SELECT id, notebook_id, notebook_token, status, user_id FROM notebook WHERE user_id is ?',
             (user_id,)
         )
 
@@ -136,7 +166,8 @@ class DatabaseAPI:
                 notebook_data[0],
                 notebook_data[1],
                 notebook_data[2],
-                notebook_data[3]
+                notebook_data[3],
+                notebook_data[4]
             ))
         return notebooks
 

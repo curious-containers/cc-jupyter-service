@@ -102,7 +102,7 @@ def create_app():
         return jsonify({'experimentIds': experiment_ids})
 
     @app.route('/notebook/<notebook_id>', methods=['GET'])
-    def notebook(notebook_id):
+    def get_notebook(notebook_id):
         """
         Returns the requested notebook.
 
@@ -124,6 +124,8 @@ def create_app():
         """
         validate_notebook_id(notebook_id)
         notebook_database.save_notebook(request.json, notebook_id, is_result=True)
+        database_api = DatabaseAPI.create()
+        database_api.update_notebook_status(notebook_id, DatabaseAPI.NotebookStatus.SUCCEEDED)
 
         return 'notebook submitted'
 
@@ -168,7 +170,7 @@ def create_app():
         for notebook in database_api.get_notebooks(g.user.user_id):
             entries.append({
                 'notebook_id': notebook.notebook_id,
-                'process_status': 'nice'
+                'process_status': str(notebook.status)
             })
         return jsonify(entries)
 
