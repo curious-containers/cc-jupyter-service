@@ -6,7 +6,7 @@ from flask import g
 from werkzeug.urls import url_join
 
 from cc_jupyter_service.common import red_file_template
-from cc_jupyter_service.common.helper import normalize_url, check_agency, AUTHORIZATION_COOKIE_KEY
+from cc_jupyter_service.common.helper import normalize_url, AUTHORIZATION_COOKIE_KEY
 from cc_jupyter_service.service.db import DatabaseAPI
 
 
@@ -38,17 +38,17 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_authorizati
     """
     agency_url = normalize_url(agency_url)
 
-    # check_agency(agency_url, agency_username, agency_password)
-
     notebook_id = str(uuid.uuid4())
 
     notebook_token = str(uuid.uuid4())
     notebook_database.save_notebook(notebook_data, notebook_id)
 
-    experiment_id = start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root)
+    experiment_id = start_agency(
+        notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root
+    )
 
     database_api = DatabaseAPI.create()
-    database_api.create_notebook(notebook_id, notebook_token, g.user.user_id)
+    database_api.create_notebook(notebook_id, notebook_token, g.user.user_id, experiment_id)
 
     return experiment_id
 
