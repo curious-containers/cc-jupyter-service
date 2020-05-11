@@ -11,7 +11,7 @@ request_schema = {
                 }
             }
         },
-        'dependencies': {'type': 'array'}
+        'dependencies': {'type': 'object'}
     },
     'additionalProperties': False,
     'required': ['jupyterNotebooks', 'dependencies']

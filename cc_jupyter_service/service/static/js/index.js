@@ -62,15 +62,15 @@ $(document).ready(function() {
             event.stopPropagation();
         });
 
-        dropZone.on('drop', ondropNotebookHandler);
+        dropZone.on('drop', ondropNotebookHandler, undefined, undefined);
 
         // dependencies
         const dependenciesSection = $('<div id="dependenciesSection">');
         dependenciesSection.append('<header> <h1>Dependencies</h1> </header>');
-        dependenciesSection.append('<input type="checkbox" name="cudaRequired" id="cudaRequired" checked="checked">');
-        dependenciesSection.append('<label for="cudaRequired">CUDA</label><br>');
-        dependenciesSection.append('<input type="checkbox" name="tensorflowRequired" id="tensorflowRequired" checked="checked">');
-        dependenciesSection.append('<label for="tensorflowRequired">Tensorflow</label>');
+        // dependenciesSection.append('<input type="checkbox" name="tensorflowRequired" id="tensorflowRequired">');
+        // dependenciesSection.append('<label for="tensorflowRequired">Tensorflow</label>');
+        dependenciesSection.append('<label for="dockerImage">Docker Image:</label>')
+        dependenciesSection.append('<input type="text" id="dockerImage" name="dockerImage">')
 
         // submit button
         const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">')
@@ -83,6 +83,10 @@ $(document).ready(function() {
 
             // noinspection JSIgnoredPromiseFromCall
             let url = getUrl('executeNotebook');
+
+            let dependencies = {
+                'dockerImage': $('#dockerImage').value
+            }
             $.ajax({
                 url,
                 method: 'POST',
@@ -90,7 +94,7 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: JSON.stringify({
                     jupyterNotebooks: jupyterNotebookEntries,
-                    dependencies: []  // TODO: dependencies
+                    dependencies: dependencies
                 })
             }).fail(function (e, statusText, errorMessage) {
                 console.error(errorMessage, e.responseText);
@@ -109,7 +113,7 @@ $(document).ready(function() {
         const resultTable = $('#resultTable');
         let row = $('<tr><td>' + notebookId + '</td><td>' + processStatus + '</td><td></td></tr>');
         let downloadButton = $('<button>download</button>');
-        downloadButton.click(function (a) {
+        downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
         })
         row.append(downloadButton);
@@ -142,7 +146,7 @@ $(document).ready(function() {
             url,
             method: 'GET',
             dataType: 'json',
-        }).done(function (data, statusText, jqXHR) {
+        }).done(function (data, _statusText, _jqXHR) {
             for (let entry of data) {
                 addResultEntry(entry['notebook_id'], entry['process_status']);
             }
