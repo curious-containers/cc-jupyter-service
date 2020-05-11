@@ -170,6 +170,8 @@ def create_app():
         """
         database_api = DatabaseAPI.create()
 
+        # update notebook status for every notebook of the current user
+
         entries = []
         for notebook in database_api.get_notebooks(g.user.user_id):
             entries.append({
@@ -181,6 +183,16 @@ def create_app():
     database_module.init_app(app)
 
     return app
+
+
+def _update_notebook_status(user):
+    """
+    Updates the database status for every notebook of the given user. Therefor a request to the agency is made.
+
+    :param user: The user to fetch the notebook status for
+    :type user: DatabaseAPI.User
+    """
+
 
 
 def validate_notebook_id(notebook_id):

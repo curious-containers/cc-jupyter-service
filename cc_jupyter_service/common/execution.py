@@ -45,10 +45,12 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_authorizati
     notebook_token = str(uuid.uuid4())
     notebook_database.save_notebook(notebook_data, notebook_id)
 
+    experiment_id = start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root)
+
     database_api = DatabaseAPI.create()
     database_api.create_notebook(notebook_id, notebook_token, g.user.user_id)
 
-    return start_agency(notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root)
+    return experiment_id
 
 
 def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root):
