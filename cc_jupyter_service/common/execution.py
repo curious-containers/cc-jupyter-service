@@ -13,7 +13,10 @@ from cc_jupyter_service.service.db import DatabaseAPI
 DEFAULT_DOCKER_IMAGE = 'bruno1996/cc_jupyterservice_base_image'
 
 
-def exec_notebook(notebook_data, agency_url, agency_username, agency_authorization_cookie, notebook_database, url_root):
+def exec_notebook(
+        notebook_data, agency_url, agency_username, agency_authorization_cookie, notebook_database, url_root,
+        dependencies
+):
     """
     - Validates the agency authentication information
     - Generates a new id and token for the notebook
@@ -32,6 +35,8 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_authorizati
     :type notebook_database: NotebookDatabase
     :param url_root: The url root of this notebook service
     :type url_root: str
+    :param dependencies: The dependencies the user specified
+    :type dependencies: dict
 
     :return: The experiment id of the executed experiment
     :rtype: str
@@ -44,7 +49,7 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_authorizati
     notebook_database.save_notebook(notebook_data, notebook_id)
 
     experiment_id = start_agency(
-        notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root
+        notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root, dependencies
     )
 
     database_api = DatabaseAPI.create()
@@ -53,7 +58,7 @@ def exec_notebook(notebook_data, agency_url, agency_username, agency_authorizati
     return experiment_id
 
 
-def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root):
+def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image):
     """
     Creates the red data that can be used for execution on an agency.
 
@@ -67,6 +72,8 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, u
     :type agency_username: str
     :param url_root: The url root of this notebook service
     :type url_root: str
+    :param docker_image: The docker image to use
+    :type docker_image: str
     :return: The red data filled with the given information to execute on an agency
     """
     red_data = copy.deepcopy(red_file_template.RED_FILE_TEMPLATE)
@@ -90,12 +97,14 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, u
     execution_engine_access['auth']['password'] = ''  # We dont need this, since we do authorization by cookie
 
     # docker image
-    red_data['container']['settings']['image']['url'] = DEFAULT_DOCKER_IMAGE
+    red_data['container']['settings']['image']['url'] = docker_image
 
     return red_data
 
 
-def start_agency(notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root):
+def start_agency(
+        notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root, dependencies
+):
     """
     Executes the given notebook on the given agency.
 
@@ -111,13 +120,16 @@ def start_agency(notebook_id, notebook_token, agency_url, agency_username, autho
     :type authorization_cookie: str
     :param url_root: The url root of this notebook service
     :type url_root: str
+    :param dependencies: The dependencies the user specified
+    :type dependencies: dict
 
     :return: The experiment id of the started experiment
     :rtype: str
 
     :raise HTTPError: If the red post failed
     """
-    red_data = _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root)
+    docker_image = dependencies['dockerImage']
+    red_data = _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image)
 
     r = requests.post(
         url_join(agency_url, 'red'),

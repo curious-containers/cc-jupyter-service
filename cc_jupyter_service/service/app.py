@@ -98,7 +98,8 @@ def create_app():
                     agency_username=user.agency_username,
                     agency_authorization_cookie=agency_authorization_cookie.cookie_text,
                     notebook_database=notebook_database,
-                    url_root=request.url_root
+                    url_root=request.url_root,
+                    dependencies=request_data['dependencies']
                 )
             except HTTPError as e:
                 raise BadRequest('Could not execute {}. {}'.format(jupyter_notebook['filename'], str(e)))
