@@ -125,7 +125,7 @@ def create_app():
         validate_notebook_id(notebook_id)
         notebook_database.save_notebook(request.json, notebook_id, is_result=True)
         database_api = DatabaseAPI.create()
-        database_api.update_notebook_status(notebook_id, DatabaseAPI.NotebookStatus.SUCCEEDED)
+        database_api.update_notebook_status(notebook_id, DatabaseAPI.NotebookStatus.SUCCESS)
 
         return 'notebook submitted'
 
@@ -192,7 +192,7 @@ def _update_notebook_status(user):
     :param user: The user to fetch the notebook status for
     :type user: DatabaseAPI.User
     """
-
+    pass
 
 
 def validate_notebook_id(notebook_id):
