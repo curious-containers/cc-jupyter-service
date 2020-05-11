@@ -67,6 +67,13 @@ class DatabaseAPI:
         def __str__(self):
             self.name.lower()
 
+        @classmethod
+        def from_int(cls, value):
+            for e in cls:
+                if e == value:
+                    return e
+            raise ValueError('Cannot create NotebookStatus with value {}'.format(value))
+
     def __init__(self, db):
         """
         Initializes a new DatabaseAPI.
@@ -101,7 +108,7 @@ class DatabaseAPI:
         """
         self.db.execute(
             'INSERT INTO notebook (notebook_id, notebook_token, status, user_id) VALUES (?, ?, ?, ?)',
-            (notebook_id, generate_password_hash(notebook_token), status, user_id)
+            (notebook_id, generate_password_hash(notebook_token), int(status), user_id)
         )
         self.db.commit()
 
@@ -116,7 +123,7 @@ class DatabaseAPI:
         """
         self.db.execute(
             'UPDATE notebook SET status = (?) WHERE notebook_id is ?',
-            (status, notebook_id)
+            (int(status), notebook_id)
         )
         self.db.commit()
 
@@ -144,7 +151,7 @@ class DatabaseAPI:
         if row is None:
             raise DatabaseError('NotebookID "{}" could not be found'.format(notebook_id))
 
-        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4])
+        return DatabaseAPI.Notebook(row[0], row[1], row[2], DatabaseAPI.NotebookStatus.from_int(row[3]), row[4])
 
     def get_notebooks(self, user_id):
         """
@@ -166,7 +173,7 @@ class DatabaseAPI:
                 notebook_data[0],
                 notebook_data[1],
                 notebook_data[2],
-                notebook_data[3],
+                DatabaseAPI.NotebookStatus.from_int(notebook_data[3]),
                 notebook_data[4]
             ))
         return notebooks
