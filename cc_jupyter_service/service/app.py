@@ -201,7 +201,7 @@ def _update_notebook_status(user):
     cookies = database_api.get_cookies(user.user_id)
     if len(cookies) == 0:
         return
-    authorization_cookie = cookies[0]  # TODO: choose cookie
+    authorization_cookie = cookies[0].cookie_text  # TODO: choose cookie
     agency_url = normalize_url(user.agency_url)
 
     r = requests.get(
