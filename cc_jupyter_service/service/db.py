@@ -61,8 +61,8 @@ class DatabaseAPI:
 
     class NotebookStatus(enum.IntEnum):
         PROCESSING = 0
-        SUCCEEDED = 1
-        FAILED = 2
+        SUCCESS = 1
+        FAILURE = 2
 
         def __str__(self):
             return self.name.lower()
