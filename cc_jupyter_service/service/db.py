@@ -65,7 +65,7 @@ class DatabaseAPI:
         FAILED = 2
 
         def __str__(self):
-            self.name.lower()
+            return self.name.lower()
 
         @classmethod
         def from_int(cls, value):
