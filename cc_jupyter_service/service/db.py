@@ -101,7 +101,7 @@ class DatabaseAPI:
         """
         self.db.execute(
             'INSERT INTO notebook (notebook_id, notebook_token, status, user_id) VALUES (?, ?, ?, ?)',
-            (notebook_id, generate_password_hash(notebook_token), user_id)
+            (notebook_id, generate_password_hash(notebook_token), status, user_id)
         )
         self.db.commit()
 
