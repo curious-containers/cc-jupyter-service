@@ -1,11 +1,15 @@
 import os
+
+import requests
 from flask import Flask, render_template, request, jsonify, g, Response
 from requests import HTTPError
 from werkzeug.exceptions import BadRequest, NotFound, Unauthorized
 import jsonschema
 import nbformat
 from werkzeug.security import check_password_hash
+from werkzeug.urls import url_join
 
+from cc_jupyter_service.common.helper import normalize_url, AUTHORIZATION_COOKIE_KEY
 from cc_jupyter_service.service.db import DatabaseAPI
 import cc_jupyter_service.service.auth as auth
 import cc_jupyter_service.service.db as database_module
@@ -15,6 +19,7 @@ from cc_jupyter_service.common.schema.request import request_schema
 from cc_jupyter_service.common.conf import Conf
 
 DESCRIPTION = 'CC-Jupyter-Service.'
+UPDATE_NOTEBOOK_BATCH_LIMIT = 1000
 
 
 conf = Conf.from_system()
@@ -170,7 +175,7 @@ def create_app():
         """
         database_api = DatabaseAPI.create()
 
-        # update notebook status for every notebook of the current user
+        _update_notebook_status(g.user)
 
         entries = []
         for notebook in database_api.get_notebooks(g.user.user_id):
@@ -192,7 +197,32 @@ def _update_notebook_status(user):
     :param user: The user to fetch the notebook status for
     :type user: DatabaseAPI.User
     """
-    pass
+    database_api = DatabaseAPI.create()
+    cookies = database_api.get_cookies(user.user_id)
+    if len(cookies) == 0:
+        return
+    authorization_cookie = cookies[0]  # TODO: choose cookie
+    agency_url = normalize_url(user.agency_url)
+
+    r = requests.get(
+        url_join(agency_url, 'batches'),
+        cookies={AUTHORIZATION_COOKIE_KEY: authorization_cookie},
+        params={'limit': UPDATE_NOTEBOOK_BATCH_LIMIT, 'username': user.agency_username}
+    )
+    r.raise_for_status()
+
+    batches = r.json()
+    notebooks = database_api.get_notebooks(user_id=user.user_id, status=DatabaseAPI.NotebookStatus.PROCESSING)
+
+    experiment_states = {}
+    for batch in batches:
+        experiment_states[batch['experimentId']] = batch['state']
+
+    for notebook in notebooks:
+        experiment_state = experiment_states[notebook.experiment_id]
+        if experiment_state in ('succeeded', 'failed', 'cancelled'):
+            notebook_state = DatabaseAPI.NotebookStatus.from_experiment_state(experiment_state)
+            database_api.update_notebook_status(notebook.notebook_id, notebook_state)
 
 
 def validate_notebook_id(notebook_id):

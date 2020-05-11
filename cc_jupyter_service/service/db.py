@@ -77,6 +77,19 @@ class DatabaseAPI:
                     return e
             raise ValueError('Cannot create NotebookStatus with value {}'.format(value))
 
+        @staticmethod
+        def from_experiment_state(experiment_state):
+            notebook_status = DatabaseAPI.EXPERIMENT_STATE_TO_NOTEBOOK_STATUS.get(experiment_state)
+            if notebook_status is None:
+                raise ValueError('Cannot create NotebookStatus from experiment state "{}"'.format(experiment_state))
+            return notebook_status
+
+    EXPERIMENT_STATE_TO_NOTEBOOK_STATUS = {
+        'succeeded': NotebookStatus.SUCCESS,
+        'failed': NotebookStatus.FAILURE,
+        'cancelled': NotebookStatus.FAILURE
+    }
+
     def __init__(self, db):
         """
         Initializes a new DatabaseAPI.
@@ -159,19 +172,31 @@ class DatabaseAPI:
 
         return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5])
 
-    def get_notebooks(self, user_id):
+    def get_notebooks(self, user_id, status=None):
         """
         Returns a list of notebook executed by the given user
 
         :param user_id: The user id of the executing user
         :type user_id: int
+        :param status: The status that is used for filtering
+        :type status: DatabaseAPI.NotebookStatus
         :return: List of Notebooks
         :rtype: list[DatabaseAPI.Notebook]
         """
-        cur = self.db.execute(
-            'SELECT id, notebook_id, notebook_token, experiment_id, status, user_id FROM notebook WHERE user_id is ?',
-            (user_id,)
-        )
+        if status is None:
+            cur = self.db.execute(
+                'SELECT id, notebook_id, notebook_token, experiment_id, status, user_id '
+                'FROM notebook '
+                'WHERE user_id is ?',
+                (user_id,)
+            )
+        else:
+            cur = self.db.execute(
+                'SELECT id, notebook_id, notebook_token, experiment_id, status, user_id '
+                'FROM notebook '
+                'WHERE user_id is ? AND status is ?',
+                (user_id, int(status))
+            )
 
         notebooks = []
         for notebook_data in cur:
