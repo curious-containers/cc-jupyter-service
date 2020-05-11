@@ -134,11 +134,15 @@ def create_app():
     def get_result(notebook_id):
         """
         Gets the result of the given notebook id.
-
-        :param notebook_id:
-        :return:
         """
         if notebook_database.check_notebook(notebook_id, True):
+
+            # check right user
+            database_api = DatabaseAPI.create()
+            notebook = database_api.get_notebook(notebook_id)
+            if notebook.user_id != g.user.user_id:
+                raise Unauthorized('Only the owner of a notebook can request the results')
+
             def generate():
                 with notebook_database.open_notebook_file(notebook_id, is_result=True) as notebook_file:
                     while True:
