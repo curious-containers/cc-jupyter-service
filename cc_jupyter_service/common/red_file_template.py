@@ -46,7 +46,7 @@ RED_FILE_TEMPLATE = {
         "outputNotebook": {
             "class": "File",
             "connector": {
-                "command": "red-connector-http",
+                "command": "red-connector-http-json",
                 "access": {
                     "url": None,  # replaced with the url of this jupyter service
                     "auth": {
