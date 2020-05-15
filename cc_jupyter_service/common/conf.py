@@ -11,8 +11,28 @@ yaml.default_flow_style = False
 CONFIG_FILE_LOCATIONS = ['cc-jupyter-service-config.yml', '~/.config/cc-jupyter-service.yml']
 
 
+class ImageInfo:
+    def __init__(self, name, description, tag):
+        """
+        Creates a new predefined information object for an predefined docker image.
+
+        :param name: The name of the image. This should be a short string that names the image
+        :type name: str
+        :param description: The description of the image.
+        :type description: str
+        :param tag: The tag that can be used by docker to identify the image at docker hub.
+        :type tag: str
+        """
+        self.name = name
+        self.description = description
+        self.tag = tag
+
+    def to_json(self):
+        return {'name': self.name, 'description': self.description, 'tag': self.tag}
+
+
 class Conf:
-    def __init__(self, notebook_directory, flask_secret_key, prevent_localhost):
+    def __init__(self, notebook_directory, flask_secret_key, prevent_localhost, predefined_docker_images):
         """
         Creates a new Conf object.
 
@@ -22,10 +42,14 @@ class Conf:
         :type flask_secret_key: str
         :param prevent_localhost: Whether to prevent cc jupyter service to run on localhost or not
         :type prevent_localhost: bool
+        :param predefined_docker_images: A list of predefined docker images. The user can choose docker images out of
+                                         this list in the frontend.
+        :type predefined_docker_images: list[ImageInfo]
         """
         self.notebook_directory = notebook_directory
         self.flask_secret_key = flask_secret_key
         self.prevent_localhost = prevent_localhost
+        self.predefined_docker_images = predefined_docker_images
 
     @staticmethod
     def from_system():
@@ -79,10 +103,16 @@ class Conf:
         except jsonschema.ValidationError as e:
             raise ConfigurationError('Invalid config file. {}'.format(e))
 
+        predefined_docker_images = list(map(
+            lambda pddi: ImageInfo(pddi['name'], pddi['description'], pddi['tag']),
+            data.get('predefinedDockerImages', [])
+        ))
+
         return Conf(
             notebook_directory=data['notebookDirectory'],
             flask_secret_key=data['flaskSecretKey'],
-            prevent_localhost=data.get('preventLocalhost', True)
+            prevent_localhost=data.get('preventLocalhost', True),
+            predefined_docker_images=predefined_docker_images
         )
 
 

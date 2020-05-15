@@ -186,6 +186,15 @@ def create_app():
             })
         return jsonify(entries)
 
+    @app.route('/predefined_docker_images', methods=['GET'])
+    @auth.login_required
+    def get_predefined_docker_images():
+        """
+        Lists the predefined docker images of this server
+        """
+        result = list(map(lambda pdi: pdi.to_json(), conf.predefined_docker_images))
+        return jsonify(result)
+
     database_module.init_app(app)
 
     return app
