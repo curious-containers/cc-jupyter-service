@@ -15,7 +15,7 @@ DEFAULT_DOCKER_IMAGE = 'bruno1996/cc_jupyterservice_base_image'
 
 def exec_notebook(
         notebook_data, agency_url, agency_username, agency_authorization_cookie, notebook_database, url_root,
-        dependencies
+        docker_image
 ):
     """
     - Validates the agency authentication information
@@ -35,8 +35,8 @@ def exec_notebook(
     :type notebook_database: NotebookDatabase
     :param url_root: The url root of this notebook service
     :type url_root: str
-    :param dependencies: The dependencies the user specified
-    :type dependencies: dict
+    :param docker_image: The docker image to use
+    :type docker_image: str
 
     :return: The experiment id of the executed experiment
     :rtype: str
@@ -49,7 +49,7 @@ def exec_notebook(
     notebook_database.save_notebook(notebook_data, notebook_id)
 
     experiment_id = start_agency(
-        notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root, dependencies
+        notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root, docker_image
     )
 
     database_api = DatabaseAPI.create()
@@ -103,7 +103,7 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, u
 
 
 def start_agency(
-        notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root, dependencies
+        notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root, docker_image
 ):
     """
     Executes the given notebook on the given agency.
@@ -120,15 +120,14 @@ def start_agency(
     :type authorization_cookie: str
     :param url_root: The url root of this notebook service
     :type url_root: str
-    :param dependencies: The dependencies the user specified
-    :type dependencies: dict
+    :param docker_image: The docker image to use
+    :type docker_image: str
 
     :return: The experiment id of the started experiment
     :rtype: str
 
     :raise HTTPError: If the red post failed
     """
-    docker_image = dependencies['dockerImage']
     red_data = _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image)
 
     r = requests.post(

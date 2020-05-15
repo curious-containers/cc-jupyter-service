@@ -60,6 +60,24 @@ def create_app():
             except nbformat.ValidationError as e:
                 raise BadRequest('Failed to validate notebook "{}.\n{}"'.format(jupyter_notebook['filename'], str(e)))
 
+    def dependencies_to_docker_image(dependencies):
+        """
+        Chooses a docker image from the given dependencies.
+
+        :param dependencies:
+        :return: The docker image tag
+
+        :raise ValueError: If the given predefined image could not be found
+        """
+        if dependencies['custom']:
+            return dependencies['customImage']
+
+        image_name = dependencies['predefinedImage']
+        for predefined_docker_image in conf.predefined_docker_images:
+            if predefined_docker_image.name == image_name:
+                return predefined_docker_image.tag
+        raise ValueError('Could not find docker image with name "{}"'.format(image_name))
+
     @app.route('/', methods=['GET'])
     @auth.login_required
     def root():
@@ -90,6 +108,11 @@ def create_app():
         database_api = DatabaseAPI.create()
         agency_authorization_cookie = database_api.get_cookies(user.user_id)[0]  # TODO: choose cookie
 
+        try:
+            docker_image = dependencies_to_docker_image(request_data['dependencies'])
+        except ValueError as e:
+            raise BadRequest(str(e))
+
         for jupyter_notebook in request_data['jupyterNotebooks']:
             try:
                 experiment_id = exec_notebook(
@@ -99,7 +122,7 @@ def create_app():
                     agency_authorization_cookie=agency_authorization_cookie.cookie_text,
                     notebook_database=notebook_database,
                     url_root=request.url_root,
-                    dependencies=request_data['dependencies']
+                    docker_image=docker_image
                 )
             except HTTPError as e:
                 raise BadRequest('Could not execute {}. {}'.format(jupyter_notebook['filename'], str(e)))

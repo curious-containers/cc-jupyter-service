@@ -171,9 +171,6 @@ $(document).ready(function() {
 
             let url = getUrl('executeNotebook');
 
-            const dependencies = {
-                dockerImage: $('#dockerImage').val()
-            }
             // noinspection JSIgnoredPromiseFromCall
             $.ajax({
                 url,
@@ -182,7 +179,7 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: JSON.stringify({
                     jupyterNotebooks: jupyterNotebookEntries,
-                    dependencies
+                    dependencies: dependenciesSelection
                 })
             }).fail(function (e, statusText, errorMessage) {
                 console.error(errorMessage, e.responseText);
