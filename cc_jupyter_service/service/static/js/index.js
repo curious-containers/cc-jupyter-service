@@ -10,6 +10,34 @@ $(document).ready(function() {
     }
 
     const jupyterNotebookEntries = [];
+    const dependenciesSelection = {
+        custom: false,
+        predefinedImage: 'Base Image',
+        customImage: ''
+    }
+    let globalPredefinedImages = [];
+
+    /**
+     * Fetches the predefined docker images from the server
+     */
+    function updatePredefinedDockerImages() {
+        let url = getUrl('predefined_docker_images');
+
+        // noinspection JSIgnoredPromiseFromCall
+        $.ajax({
+            url,
+            method: 'GET',
+            dataType: 'json',
+        }).fail(function (e, statusText, errorMessage) {
+            console.error('failed to fetch predefined docker images info:', errorMessage, e.responseText);
+            showError(e.responseText)
+        }).done(function (d) {
+            globalPredefinedImages = d;
+            setupDependencies($('#dependenciesPredefined'), $('#predefinedImages'), $('#dependenciesCustom'), $('#customDockerImage'));
+        });
+    }
+
+    updatePredefinedDockerImages();
 
     /**
      * Setup the click events for the navigation bar
@@ -41,6 +69,49 @@ $(document).ready(function() {
     }
 
     /**
+     * Adds the right elements to the image selection by inspecting the dependenciesSelection Variable.
+     *
+     * @param predefinedImagesRadio The radio selection for predefined images
+     * @param predefinedImages The html select element that stores the predefined images
+     * @param customImagesRadio The html radio selection for custom images
+     * @param customImages The html input element that stores the custom image name
+     */
+    function setupDependencies(predefinedImagesRadio, predefinedImages, customImagesRadio, customImages) {
+        predefinedImagesRadio.prop('checked', !dependenciesSelection.custom);
+        customImagesRadio.prop('checked', dependenciesSelection.custom);
+        predefinedImages.prop('disabled', dependenciesSelection.custom);
+        customImages.prop('disabled', !dependenciesSelection.custom);
+
+        predefinedImages.empty();
+        for (const predefinedImageId of globalPredefinedImages) {
+            const option = $('<option value="' + predefinedImageId.name + '">' + predefinedImageId.name + '</option>')
+            predefinedImages.append(option);
+            option.prop('selected', predefinedImageId.name === dependenciesSelection.predefinedImage);
+        }
+        predefinedImages.append()
+
+        customImages.val(dependenciesSelection.customImage);
+
+        // setup callbacks
+        predefinedImagesRadio.click(function() {
+            dependenciesSelection.custom = false;
+            predefinedImages.prop('disabled', false);
+            customImages.prop('disabled', true);
+        })
+        predefinedImages.change(function() {
+            dependenciesSelection.predefinedImage = predefinedImages.val();
+        })
+        customImagesRadio.click(function() {
+            dependenciesSelection.custom = true;
+            predefinedImages.prop('disabled', true);
+            customImages.prop('disabled', false);
+        })
+        customImages.keyup(function() {
+            dependenciesSelection.customImage = customImages.val();
+        })
+    }
+
+    /**
      * Creates the html elements for the execution view and inserts them into the main div.
      */
     function showExecutionView() {
@@ -50,7 +121,10 @@ $(document).ready(function() {
         const dropZone = $('<div id="dropZone">');
         dropZone.append('<header> <h1>Jupyter Notebook</h1> </header>');
         dropZone.append('<div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>');
-        dropZone.append('<ul id="notebookList"> </ul>');
+
+        const notebookList = $('<ul id="notebookList"> </ul>');
+        refreshNotebookList(notebookList);
+        dropZone.append(notebookList);
 
         dropZone.on("dragover", function(event) {
             event.preventDefault();
@@ -67,13 +141,27 @@ $(document).ready(function() {
         // dependencies
         const dependenciesSection = $('<div id="dependenciesSection">');
         dependenciesSection.append('<header> <h1>Dependencies</h1> </header>');
-        // dependenciesSection.append('<input type="checkbox" name="tensorflowRequired" id="tensorflowRequired">');
-        // dependenciesSection.append('<label for="tensorflowRequired">Tensorflow</label>');
-        dependenciesSection.append('<label for="dockerImage">Docker Image:</label>')
-        dependenciesSection.append('<input type="text" id="dockerImage" name="dockerImage">')
+
+        const predefinedImagesRadio = $('<input type="radio" id="dependenciesPredefined" name="dependenciesRadio" value="predefined">')
+        dependenciesSection.append(predefinedImagesRadio);
+        dependenciesSection.append('<label for="dependenciesPredefined">Predefined Docker Images</label><br>');
+
+        const predefinedImages = $('<select id="predefinedImages">');
+        dependenciesSection.append(predefinedImages);
+
+        const customImagesRadio = $('<input type="radio" id="dependenciesCustom" name="dependenciesRadio" value="custom">');
+        dependenciesSection.append('<br>');
+        dependenciesSection.append(customImagesRadio);
+        dependenciesSection.append('<label for="dependenciesCustom">Custom Docker Image</label><br>');
+
+        dependenciesSection.append('<label for="customDockerImage">Docker Image Tag:</label>');
+        const customImages = $('<input type="text" id="customDockerImage" name="customDockerImage">');
+        dependenciesSection.append(customImages);
+
+        setupDependencies(predefinedImagesRadio, predefinedImages, customImagesRadio, customImages);
 
         // submit button
-        const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">')
+        const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">');
 
         submitButton.click(function() {
             if (jupyterNotebookEntries.length === 0) {
@@ -81,12 +169,12 @@ $(document).ready(function() {
                 return;
             }
 
-            // noinspection JSIgnoredPromiseFromCall
             let url = getUrl('executeNotebook');
 
             const dependencies = {
                 dockerImage: $('#dockerImage').val()
             }
+            // noinspection JSIgnoredPromiseFromCall
             $.ajax({
                 url,
                 method: 'POST',
@@ -142,6 +230,7 @@ $(document).ready(function() {
      */
     function refreshResults() {
         let url = getUrl('list_results')
+        // noinspection JSIgnoredPromiseFromCall
         $.ajax({
             url,
             method: 'GET',
@@ -150,6 +239,8 @@ $(document).ready(function() {
             for (let entry of data) {
                 addResultEntry(entry['notebook_id'], entry['process_status']);
             }
+        }).fail(function (a, b, c) {
+            console.error('Failed to refresh job list');
         });
     }
 
@@ -160,6 +251,18 @@ $(document).ready(function() {
      */
     function showError(errorMessage) {
         $('#messages').append('<div class="flash">' + errorMessage + '</div>');
+    }
+
+    /**
+     * Creates the necessary elements in notebook list by the items of jupyterNotebookEntries.
+     *
+     * @param notebookList The jquery ul element that stores the notebook entries
+     */
+    function refreshNotebookList(notebookList) {
+        notebookList.empty();
+        for (const entry of jupyterNotebookEntries) {
+            notebookList.append('<li>' + entry.filename + '</li>');
+        }
     }
 
     /**
@@ -178,14 +281,16 @@ $(document).ready(function() {
             reader.onload = function(ev) {
                 let json = null;
                 try {
-                    json = JSON.parse(ev.target.result);
+                    // noinspection JSIgnoredPromiseFromCall
+                    const res = ev.target.result.toString();
+                    json = JSON.parse(res);
                 } catch (error) {
                     console.error('Error while decoding notebook.' + error + '\ncontent was: ' + ev.target.result);
                     showError('Error while decoding notebook. ' + error);
                     return;
                 }
                 jupyterNotebookEntries.push(new NotebookEntry(json, file.name));
-                notebookList.append('<li>' + file.name + '</li>');
+                refreshNotebookList(notebookList);
             };
             reader.readAsText(file);
         }
@@ -194,5 +299,4 @@ $(document).ready(function() {
     setupNavbar();
 
     showExecutionView();
-    // showResultView();
 });
