@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    const DEFAULT_GPU_VRAM = "2048";
+    const DEFAULT_GPU_VRAM = 2048;
     class NotebookEntry {
         data;
         filename;
@@ -120,7 +120,7 @@ $(document).ready(function() {
             const tmpIndex = index;
             const gpuVram = $('<input id="gpuVram' + tmpIndex + '" type="number" value="' + gpuRequirement + '" step="1024">');
             gpuVram.change(function() {
-                gpuRequirements[tmpIndex] = gpuVram.val();
+                gpuRequirements[tmpIndex] = parseInt(gpuVram.val().toString());
             })
             const li = $('<li><label for="gpuVram' + tmpIndex + '">GPU VRAM</label></li>');
             li.append(gpuVram);
@@ -134,7 +134,6 @@ $(document).ready(function() {
             gpuList.append(li);
             index += 1;
         }
-
         console.log(gpuRequirements);
     }
 
