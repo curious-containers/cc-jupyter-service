@@ -15,7 +15,7 @@ DEFAULT_DOCKER_IMAGE = 'bruno1996/cc_jupyterservice_base_image'
 
 def exec_notebook(
         notebook_data, agency_url, agency_username, agency_authorization_cookie, notebook_database, url_root,
-        docker_image
+        docker_image, gpu_requirements
 ):
     """
     - Validates the agency authentication information
@@ -37,6 +37,8 @@ def exec_notebook(
     :type url_root: str
     :param docker_image: The docker image to use
     :type docker_image: str
+    :param gpu_requirements: The gpu requirements of the request
+    :type gpu_requirements: object or None
 
     :return: The experiment id of the executed experiment
     :rtype: str
@@ -49,7 +51,8 @@ def exec_notebook(
     notebook_database.save_notebook(notebook_data, notebook_id)
 
     experiment_id = start_agency(
-        notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root, docker_image
+        notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root, docker_image,
+        gpu_requirements
     )
 
     database_api = DatabaseAPI.create()
@@ -58,7 +61,9 @@ def exec_notebook(
     return experiment_id
 
 
-def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image):
+def _create_red_data(
+        notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image, gpu_requirements
+):
     """
     Creates the red data that can be used for execution on an agency.
 
@@ -74,6 +79,9 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, u
     :type url_root: str
     :param docker_image: The docker image to use
     :type docker_image: str
+    :param gpu_requirements: The gpu requirements of the request
+    :type gpu_requirements: object or None
+
     :return: The red data filled with the given information to execute on an agency
     """
     red_data = copy.deepcopy(red_file_template.RED_FILE_TEMPLATE)
@@ -97,13 +105,19 @@ def _create_red_data(notebook_id, notebook_token, agency_url, agency_username, u
     execution_engine_access['auth']['password'] = ''  # We dont need this, since we do authorization by cookie
 
     # docker image
-    red_data['container']['settings']['image']['url'] = docker_image
+    container_settings = red_data['container']['settings']
+    container_settings['image']['url'] = docker_image
+
+    # gpu requirements
+    if gpu_requirements is not None:
+        container_settings['gpus'] = gpu_requirements
 
     return red_data
 
 
 def start_agency(
-        notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root, docker_image
+        notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root, docker_image,
+        gpu_requirements
 ):
     """
     Executes the given notebook on the given agency.
@@ -122,13 +136,17 @@ def start_agency(
     :type url_root: str
     :param docker_image: The docker image to use
     :type docker_image: str
+    :param gpu_requirements: The gpu requirements of the request
+    :type gpu_requirements: object or None
 
     :return: The experiment id of the started experiment
     :rtype: str
 
     :raise HTTPError: If the red post failed
     """
-    red_data = _create_red_data(notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image)
+    red_data = _create_red_data(
+        notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image, gpu_requirements
+    )
 
     r = requests.post(
         url_join(agency_url, 'red'),

@@ -20,8 +20,15 @@ request_schema = {
             },
             'additionalProperties': False,
             'required': ['custom', 'predefinedImage', 'customImage']
+        },
+        'gpuRequirements': {
+            'type': 'array',
+            'items': {
+                'type': 'integer',
+                'minimum': 0
+            }
         }
     },
     'additionalProperties': False,
-    'required': ['jupyterNotebooks', 'dependencies']
+    'required': ['jupyterNotebooks', 'dependencies', 'gpuRequirements']
 }

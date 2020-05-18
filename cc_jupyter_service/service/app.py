@@ -60,6 +60,26 @@ def create_app():
             except nbformat.ValidationError as e:
                 raise BadRequest('Failed to validate notebook "{}.\n{}"'.format(jupyter_notebook['filename'], str(e)))
 
+    def create_gpu_requirements(request_requirements):
+        """
+        Transforms a list of integers interpreted as gpu vram requirements into a red compatible object for gpu
+        requirements. The vram is given in megabytes.
+
+        :param request_requirements: A list of minimum vram dependencies
+        :type request_requirements: list[integer]
+        :return: An object with the keys 'vendor' and 'devices'. The value of the vendor key is always 'nvidia' and
+                 'devices' is a list of objects with the key 'vramMin'. If no gpus are required None is returned.
+        :rtype: object or None
+        """
+        if not request_requirements:
+            return None
+
+        devices = list(map(lambda req: {'vramMin': req}, request_requirements))
+        return {
+            'vendor': 'nvidia',
+            'devices': devices
+        }
+
     def dependencies_to_docker_image(dependencies):
         """
         Chooses a docker image from the given dependencies.
@@ -116,6 +136,8 @@ def create_app():
         except ValueError as e:
             raise BadRequest(str(e))
 
+        gpu_requirements = create_gpu_requirements(request_data['gpuRequirements'])
+
         for jupyter_notebook in request_data['jupyterNotebooks']:
             try:
                 experiment_id = exec_notebook(
@@ -125,7 +147,8 @@ def create_app():
                     agency_authorization_cookie=agency_authorization_cookie.cookie_text,
                     notebook_database=notebook_database,
                     url_root=request.url_root,
-                    docker_image=docker_image
+                    docker_image=docker_image,
+                    gpu_requirements=gpu_requirements
                 )
             except HTTPError as e:
                 raise BadRequest('Could not execute {}. {}'.format(jupyter_notebook['filename'], str(e)))

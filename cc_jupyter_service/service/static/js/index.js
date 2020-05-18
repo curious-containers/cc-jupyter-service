@@ -221,7 +221,8 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: JSON.stringify({
                     jupyterNotebooks: jupyterNotebookEntries,
-                    dependencies: dependenciesSelection
+                    dependencies: dependenciesSelection,
+                    gpuRequirements
                 })
             }).fail(function (e, statusText, errorMessage) {
                 console.error(errorMessage, e.responseText);
