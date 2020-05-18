@@ -47,6 +47,11 @@ $(document).ready(function() {
     function setupNavbar() {
         $('#ExecutionNavbar').click(showExecutionView);
         $('#ResultNavbar').click(showResultView);
+        $('#LogoutNavbar').click(function() {
+            const url = getUrl('auth/logout');
+
+            window.location = url;
+        });
     }
 
     /**
