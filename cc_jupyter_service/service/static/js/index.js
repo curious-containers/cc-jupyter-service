@@ -134,7 +134,6 @@ $(document).ready(function() {
             gpuList.append(li);
             index += 1;
         }
-        console.log(gpuRequirements);
     }
 
     /**
