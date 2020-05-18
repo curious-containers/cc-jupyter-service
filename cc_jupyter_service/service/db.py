@@ -1,4 +1,5 @@
 import enum
+import os
 
 import sqlite3
 import time
@@ -24,7 +25,7 @@ class DatabaseAPI:
             self.agency_url = agency_url
 
     class Notebook:
-        def __init__(self, db_id, notebook_id, notebook_token, experiment_id, status, user_id):
+        def __init__(self, db_id, notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id):
             """
             Creates a Notebook.
 
@@ -38,6 +39,8 @@ class DatabaseAPI:
             :type experiment_id: str
             :param status: The processing status of this notebook as int
             :type status: int
+            :param notebook_filename: The filename of the notebook
+            :type notebook_filename: str
             :param user_id: The user id that executed this notebook
             :type user_id: int
             """
@@ -46,7 +49,15 @@ class DatabaseAPI:
             self.notebook_token = notebook_token
             self.experiment_id = experiment_id
             self.status = DatabaseAPI.NotebookStatus.from_int(status)
+            self.notebook_filename = notebook_filename
             self.user_id = user_id
+
+        def get_filename_without_ext(self):
+            """
+            :return: The filename without extension
+            :rtype: str
+            """
+            return os.path.splitext(self.notebook_filename)[0]
 
     class Cookie:
         def __init__(self, db_id, cookie_text, creation_time, user_id):
@@ -114,7 +125,10 @@ class DatabaseAPI:
         """
         return DatabaseAPI(get_db())
 
-    def create_notebook(self, notebook_id, notebook_token, user_id, experiment_id, status=NotebookStatus.PROCESSING):
+    def create_notebook(
+            self, notebook_id, notebook_token, user_id, experiment_id, notebook_filename,
+            status=NotebookStatus.PROCESSING
+    ):
         """
         Inserts the given notebook information into the db.
 
@@ -126,12 +140,16 @@ class DatabaseAPI:
         :type user_id: int
         :param experiment_id: The id of the experiment executing this notebook
         :type experiment_id: str
+        :param notebook_filename: The filename of the notebook
+        :type notebook_filename: str
         :param status: The initial status of the notebook. Defaults to PROCESSING
         :type status: DatabaseAPI.NotebookStatus
         """
         self.db.execute(
-            'INSERT INTO notebook (notebook_id, notebook_token, experiment_id, status, user_id) VALUES (?, ?, ?, ?, ?)',
-            (notebook_id, generate_password_hash(notebook_token), experiment_id, int(status), user_id)
+            'INSERT INTO notebook (notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id) '
+            'VALUES (?, ?, ?, ?, ?, ?)',
+            (notebook_id, generate_password_hash(notebook_token), experiment_id, int(status), notebook_filename,
+             user_id)
         )
         self.db.commit()
 
@@ -161,7 +179,7 @@ class DatabaseAPI:
         :raise DatabaseError: If the given notebook_id is not unique or could not be found
         """
         cur = self.db.execute(
-            'SELECT id, notebook_id, notebook_token, experiment_id, status, user_id '
+            'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id '
             'FROM notebook WHERE notebook_id is ?',
             (notebook_id,)
         )
@@ -175,7 +193,7 @@ class DatabaseAPI:
         if row is None:
             raise DatabaseError('NotebookID "{}" could not be found'.format(notebook_id))
 
-        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5])
+        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
 
     def get_notebooks(self, user_id, status=None):
         """
@@ -190,14 +208,14 @@ class DatabaseAPI:
         """
         if status is None:
             cur = self.db.execute(
-                'SELECT id, notebook_id, notebook_token, experiment_id, status, user_id '
+                'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id '
                 'FROM notebook '
                 'WHERE user_id is ?',
                 (user_id,)
             )
         else:
             cur = self.db.execute(
-                'SELECT id, notebook_id, notebook_token, experiment_id, status, user_id '
+                'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id '
                 'FROM notebook '
                 'WHERE user_id is ? AND status is ?',
                 (user_id, int(status))
@@ -211,7 +229,8 @@ class DatabaseAPI:
                 notebook_token=notebook_data[2],
                 experiment_id=notebook_data[3],
                 status=notebook_data[4],
-                user_id=notebook_data[5]
+                notebook_filename=notebook_data[5],
+                user_id=notebook_data[6]
             ))
         return notebooks
 

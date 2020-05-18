@@ -16,6 +16,7 @@ CREATE TABLE notebook (
   notebook_token TEXT UNIQUE NOT NULL,
   experiment_id TEXT NOT NULL,
   status INTEGER NOT NULL,  -- 0: processing   1: succeeded   2: failed
+  notebook_filename TEXT NOT NULL,
   user_id INTEGER,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );

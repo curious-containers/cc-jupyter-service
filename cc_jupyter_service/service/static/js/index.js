@@ -210,7 +210,7 @@ $(document).ready(function() {
 
         submitButton.click(function() {
             if (jupyterNotebookEntries.length === 0) {
-                showError('Upload at least one jupyter notebook');
+                showError('Upload a jupyter notebook');
                 return;
             }
 
@@ -241,9 +241,8 @@ $(document).ready(function() {
         main.append(submitButton);
     }
 
-    function addResultEntry(notebookId, processStatus) {
-        const resultTable = $('#resultTable');
-        let row = $('<tr><td>' + notebookId + '</td><td>' + processStatus + '</td><td></td></tr>');
+    function addResultEntry(resultTable, notebookId, processStatus, notebookFilename) {
+        let row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td></td></tr>');
         let downloadButton = $('<button>download</button>');
         downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
@@ -262,7 +261,7 @@ $(document).ready(function() {
 
         // result table
         let resultTable = $('<table id="resultTable" style="width:600px">');
-        resultTable.append('<tr><th>Notebook ID</th><th>Status</th><th>Result</th></tr>')
+        resultTable.append('<tr><th>Name</th><th>Status</th><th>Result</th></tr>')
 
         const main = $('#main');
         main.append(resultTable);
@@ -281,11 +280,12 @@ $(document).ready(function() {
             method: 'GET',
             dataType: 'json',
         }).done(function (data, _statusText, _jqXHR) {
+            const resultTable = $('#resultTable')
             for (let entry of data) {
-                addResultEntry(entry['notebook_id'], entry['process_status']);
+                addResultEntry(resultTable, entry['notebook_id'], entry['process_status'], entry['notebook_filename']);
             }
-        }).fail(function (_a, _b, _c) {
-            console.error('Failed to refresh job list');
+        }).fail(function (_a, _b, e) {
+            console.error('Failed to refresh job list: ', e);
         });
     }
 
@@ -305,8 +305,18 @@ $(document).ready(function() {
      */
     function refreshNotebookList(notebookList) {
         notebookList.empty();
+        let index = 0;
         for (const entry of jupyterNotebookEntries) {
-            notebookList.append('<li>' + entry.filename + '</li>');
+            const tmpIndex = index;
+            const li = $('<li>' + entry.filename + '</li>');
+            const removeBtn = $('<input id="notebookRemove' + tmpIndex + '" type="button" value="x">')
+            removeBtn.click(function() {
+                jupyterNotebookEntries.splice(tmpIndex, 1);
+                refreshNotebookList($('#notebookList'));
+            })
+            li.append(removeBtn);
+
+            notebookList.append(li);
         }
     }
 

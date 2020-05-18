@@ -15,7 +15,7 @@ DEFAULT_DOCKER_IMAGE = 'bruno1996/cc_jupyterservice_base_image'
 
 def exec_notebook(
         notebook_data, agency_url, agency_username, agency_authorization_cookie, notebook_database, url_root,
-        docker_image, gpu_requirements
+        docker_image, gpu_requirements, notebook_filename
 ):
     """
     - Validates the agency authentication information
@@ -39,6 +39,8 @@ def exec_notebook(
     :type docker_image: str
     :param gpu_requirements: The gpu requirements of the request
     :type gpu_requirements: object or None
+    :param notebook_filename: The filename of the notebook
+    :type notebook_data: str
 
     :return: The experiment id of the executed experiment
     :rtype: str
@@ -56,7 +58,7 @@ def exec_notebook(
     )
 
     database_api = DatabaseAPI.create()
-    database_api.create_notebook(notebook_id, notebook_token, g.user.user_id, experiment_id)
+    database_api.create_notebook(notebook_id, notebook_token, g.user.user_id, experiment_id, notebook_filename)
 
     return experiment_id
 

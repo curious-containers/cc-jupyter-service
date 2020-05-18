@@ -148,7 +148,8 @@ def create_app():
                     notebook_database=notebook_database,
                     url_root=request.url_root,
                     docker_image=docker_image,
-                    gpu_requirements=gpu_requirements
+                    gpu_requirements=gpu_requirements,
+                    notebook_filename=jupyter_notebook['filename']
                 )
             except HTTPError as e:
                 raise BadRequest('Could not execute {}. {}'.format(jupyter_notebook['filename'], str(e)))
@@ -206,7 +207,9 @@ def create_app():
                             break
                         yield block
             response = Response(generate(), mimetype='application/json')
-            response.headers["Content-Disposition"] = "attachment; filename=result.ipynb"
+            response.headers["Content-Disposition"] = "attachment; filename={}Result.ipynb".format(
+                notebook.get_filename_without_ext()
+            )
             response.headers["Content-Length"] = os.path.getsize(
                 notebook_database.notebook_id_to_path(notebook_id, is_result=True)
             )
@@ -231,7 +234,8 @@ def create_app():
         for notebook in database_api.get_notebooks(g.user.user_id):
             entries.append({
                 'notebook_id': notebook.notebook_id,
-                'process_status': str(notebook.status)
+                'process_status': str(notebook.status),
+                'notebook_filename': notebook.notebook_filename
             })
         return jsonify(entries)
 
