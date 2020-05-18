@@ -1,4 +1,5 @@
 $(document).ready(function() {
+    const DEFAULT_GPU_VRAM = "2048";
     class NotebookEntry {
         data;
         filename;
@@ -16,6 +17,7 @@ $(document).ready(function() {
         customImage: ''
     }
     let globalPredefinedImages = [];
+    let gpuRequirements = [];
 
     /**
      * Fetches the predefined docker images from the server
@@ -111,6 +113,31 @@ $(document).ready(function() {
         })
     }
 
+    function refreshGpuList(gpuList) {
+        gpuList.empty();
+        let index = 0;
+        for (const gpuRequirement of gpuRequirements) {
+            const tmpIndex = index;
+            const gpuVram = $('<input id="gpuVram' + tmpIndex + '" type="number" value="' + gpuRequirement + '" step="1024">');
+            gpuVram.change(function() {
+                gpuRequirements[tmpIndex] = gpuVram.val();
+            })
+            const li = $('<li><label for="gpuVram' + tmpIndex + '">GPU VRAM</label></li>');
+            li.append(gpuVram);
+
+            const removeBtn = $('<input id="gpuVramRemove' + tmpIndex + '" type="button" value="x">');
+            removeBtn.click(function() {
+                gpuRequirements.splice(tmpIndex, 1);
+                refreshGpuList($('#gpuList'));
+            })
+            li.append(removeBtn);
+            gpuList.append(li);
+            index += 1;
+        }
+
+        console.log(gpuRequirements);
+    }
+
     /**
      * Creates the html elements for the execution view and inserts them into the main div.
      */
@@ -160,6 +187,21 @@ $(document).ready(function() {
 
         setupDependencies(predefinedImagesRadio, predefinedImages, customImagesRadio, customImages);
 
+        // Hardware requirements
+        const hardwareSection = $('<div id="hardwareSection">');
+        // hardwareSection.append('<header> <h1>Hardware</h1></header>');
+
+        hardwareSection.append('<h2>GPUs</h2>');
+        const gpuList = $('<ul id="gpuList"></ul>');
+        refreshGpuList(gpuList);
+        hardwareSection.append(gpuList);
+        const addGpuButton = $('<input id="addGpu" type="button" value="+">');
+        addGpuButton.click(function () {
+            gpuRequirements.push(DEFAULT_GPU_VRAM);
+            refreshGpuList($('#gpuList'));
+        })
+        hardwareSection.append(addGpuButton);
+
         // submit button
         const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">');
 
@@ -190,6 +232,7 @@ $(document).ready(function() {
         const main = $('#main');
         main.append(dropZone);
         main.append(dependenciesSection);
+        main.append(hardwareSection);
         main.append('<br>');
         main.append(submitButton);
     }
@@ -237,7 +280,7 @@ $(document).ready(function() {
             for (let entry of data) {
                 addResultEntry(entry['notebook_id'], entry['process_status']);
             }
-        }).fail(function (a, b, c) {
+        }).fail(function (_a, _b, _c) {
             console.error('Failed to refresh job list');
         });
     }
