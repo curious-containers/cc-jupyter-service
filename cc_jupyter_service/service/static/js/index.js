@@ -201,6 +201,7 @@ $(document).ready(function() {
         downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
         })
+        downloadButton.prop('disabled', processStatus !== 'success');
         row.append(downloadButton);
 
         resultTable.append(row);
