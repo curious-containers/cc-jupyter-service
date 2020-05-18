@@ -1,6 +1,8 @@
 import enum
 
 import sqlite3
+import time
+
 import click
 from flask import g, current_app, Flask
 from flask.cli import with_appcontext
@@ -47,7 +49,7 @@ class DatabaseAPI:
             self.user_id = user_id
 
     class Cookie:
-        def __init__(self, db_id, cookie_text, user_id):
+        def __init__(self, db_id, cookie_text, creation_time, user_id):
             """
             Creates a Cookie.
 
@@ -55,11 +57,14 @@ class DatabaseAPI:
             :type db_id: int
             :param cookie_text: The text of the cookie
             :type cookie_text: str
+            :param creation_time: The creation time of the cookie as timestamp
+            :type creation_time: float
             :param user_id: The owning user id
             :type user_id: int
             """
             self.db_id = db_id
             self.cookie_text = cookie_text
+            self.creation_time = creation_time
             self.user_id = user_id
 
     class NotebookStatus(enum.IntEnum):
@@ -262,7 +267,7 @@ class DatabaseAPI:
 
     def create_cookie(self, cookie_text, user_id):
         """
-        Creates a new user.
+        Creates a new cookie.
 
         :param cookie_text: The text of the cookie
         :type cookie_text: str
@@ -274,7 +279,8 @@ class DatabaseAPI:
         """
         cur = self.db.cursor()
         cur.execute(
-            'INSERT INTO cookie (cookie_text, user_id) VALUES (?, ?)', (cookie_text, user_id)
+            'INSERT INTO cookie (cookie_text, creation_time, user_id) VALUES (?, ?, ?)',
+            (cookie_text, time.time(), user_id)
         )
         self.db.commit()
         return cur.lastrowid
@@ -286,15 +292,36 @@ class DatabaseAPI:
         :param user_id: The user id
         :type user_id: int
         :return: The list of cookies of the given user
+        :rtype: list[DatabaseAPI.Cookie]
         """
         cur = self.db.execute(
-            'SELECT id, cookie_text, user_id FROM cookie WHERE user_id is ?',
+            'SELECT id, cookie_text, creation_time, user_id FROM cookie WHERE user_id is ?',
             (user_id,)
         )
         cookies = []
         for cookie in cur:
-            cookies.append(DatabaseAPI.Cookie(cookie[0], cookie[1], cookie[2]))
+            cookies.append(DatabaseAPI.Cookie(cookie[0], cookie[1], cookie[2], cookie[3]))
         return cookies
+
+    def get_newest_cookie(self, user_id):
+        """
+        Gets the newest cookie of the given user id
+
+        :param user_id: The user id
+        :type user_id: int
+        :return: The cookie with the highest creation time
+        :rtype: DatabaseAPI.Cookie or None
+        """
+        cur = self.db.execute(
+            'SELECT id, cookie_text, creation_time, user_id FROM cookie WHERE user_id is ? ORDER BY creation_time DESC',
+            (user_id,)
+        )
+
+        cookie_data = cur.fetchone()
+        if cookie_data is None:
+            return None
+
+        return DatabaseAPI.Cookie(cookie_data[0], cookie_data[1], cookie_data[2], cookie_data[3])
 
 
 def get_db():

@@ -106,7 +106,10 @@ def create_app():
         user = g.user
 
         database_api = DatabaseAPI.create()
-        agency_authorization_cookie = database_api.get_cookies(user.user_id)[0]  # TODO: choose cookie
+        agency_authorization_cookie = database_api.get_newest_cookie(user.user_id)
+
+        if agency_authorization_cookie is None:
+            raise Unauthorized('Could not find an authorization cookie')
 
         try:
             docker_image = dependencies_to_docker_image(request_data['dependencies'])
@@ -229,17 +232,18 @@ def _update_notebook_status(user):
 
     :param user: The user to fetch the notebook status for
     :type user: DatabaseAPI.User
+
+    :raise ValueError: If no authorization cookie could be found
     """
     database_api = DatabaseAPI.create()
-    cookies = database_api.get_cookies(user.user_id)
-    if len(cookies) == 0:
-        return
-    authorization_cookie = cookies[0].cookie_text  # TODO: choose cookie
+    cookie = database_api.get_newest_cookie(user.user_id)
+    if cookie is None:
+        raise ValueError('No authorization cookie could be found')
     agency_url = normalize_url(user.agency_url)
 
     r = requests.get(
         url_join(agency_url, 'batches'),
-        cookies={AUTHORIZATION_COOKIE_KEY: authorization_cookie},
+        cookies={AUTHORIZATION_COOKIE_KEY: cookie.cookie_text},
         params={'limit': UPDATE_NOTEBOOK_BATCH_LIMIT, 'username': user.agency_username}
     )
     r.raise_for_status()
