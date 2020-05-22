@@ -10,7 +10,7 @@ $(document).ready(function() {
         }
     }
 
-    const jupyterNotebookEntries = [];
+    let jupyterNotebookEntries = [];
     const dependenciesSelection = {
         custom: false,
         predefinedImage: 'Base Image',
@@ -32,7 +32,7 @@ $(document).ready(function() {
             dataType: 'json',
         }).fail(function (e, statusText, errorMessage) {
             console.error('failed to fetch predefined docker images info:', errorMessage, e.responseText);
-            showError(e.responseText)
+            addAlert('danger', 'Failed to fetch predefined docker images!');
         }).done(function (d) {
             globalPredefinedImages = d;
             setupDependencies($('#dependenciesPredefined'), $('#predefinedImages'), $('#dependenciesCustom'), $('#customDockerImage'));
@@ -41,24 +41,41 @@ $(document).ready(function() {
 
     updatePredefinedDockerImages();
 
+    function setupAlertSection(main) {
+        main.append('<div id="alertSection"></div>');
+    }
+
     /**
      * Setup the click events for the navigation bar
      */
-    function setupNavbar() {
+    function setupNavbar(main, mode) {
+        main.append(
+            '<nav class="navbar navbar-expand-sm bg-dark navbar-dark sticky-top">' +
+            '<ul class="navbar-nav">' +
+            '<li class="nav-item"><a id="ExecutionNavbar" class="nav-link">Execution</a></li>' +
+            '<li class="nav-item"><a id="ResultNavbar" class="nav-link">Results</a></li>' +
+            '</ul>' +
+            '<ul class="navbar-nav ml-auto">' +
+            '<li class="nav-item"><a id="LogoutNavbar" class="nav-link">Logout</a></li>' +
+            '</ul>' +
+            '</nav>'
+        );
+        if (mode === 'execution') {
+            main.find('#ExecutionNavbar').addClass('active');
+        } else {
+            main.find('#ResultNavbar').addClass('active');
+        }
         $('#ExecutionNavbar').click(showExecutionView);
         $('#ResultNavbar').click(showResultView);
         $('#LogoutNavbar').click(function() {
-            const url = getUrl('auth/logout');
-
-            window.location = url;
+            window.location = getUrl('auth/logout');
         });
     }
 
     /**
      * Removes all elements from the main view
      */
-    function clearView() {
-        let main = $('#main');
+    function clearView(main) {
         main.empty();
     }
 
@@ -127,10 +144,10 @@ $(document).ready(function() {
             gpuVram.change(function() {
                 gpuRequirements[tmpIndex] = parseInt(gpuVram.val().toString());
             })
-            const li = $('<li><label for="gpuVram' + tmpIndex + '">GPU VRAM</label></li>');
+            const li = $('<li class="list-group-item"><label for="gpuVram' + tmpIndex + '" class="label">VRAM</label></li>');
             li.append(gpuVram);
 
-            const removeBtn = $('<input id="gpuVramRemove' + tmpIndex + '" type="button" value="x">');
+            const removeBtn = $('<button id="gpuRemove' + tmpIndex + '" type="button" class="close closeGpu">&times</button>');
             removeBtn.click(function() {
                 gpuRequirements.splice(tmpIndex, 1);
                 refreshGpuList($('#gpuList'));
@@ -141,20 +158,33 @@ $(document).ready(function() {
         }
     }
 
+    function addAlert(alertType, text) {
+        const alertSection = $('#alertSection');
+        const alert = $('<div class="alert alert-' + alertType + ' alert-dismissible"></div>');
+        alert.append('<button type="button" class="close" data-dismiss="alert">&times</button>');
+        alert.append(text);
+        alertSection.append(alert);
+    }
+
     /**
      * Creates the html elements for the execution view and inserts them into the main div.
      */
     function showExecutionView() {
-        clearView();
+        const main = $('#main');
+
+        clearView(main);
+        setupAlertSection(main);
+        setupNavbar(main, 'execution');
 
         // drop zone
-        const dropZone = $('<div id="dropZone">');
-        dropZone.append('<header> <h1>Jupyter Notebook</h1> </header>');
-        dropZone.append('<div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>');
+        const dropZoneSection = $('<div id="dropZoneSection">');
+        dropZoneSection.append('<h3>Jupyter Notebook</h3>');
+        const dropZone = $('<div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>');
+        dropZoneSection.append(dropZone);
 
-        const notebookList = $('<ul id="notebookList"> </ul>');
+        const notebookList = $('<ul id="notebookList" class="list-group"> </ul>');
         refreshNotebookList(notebookList);
-        dropZone.append(notebookList);
+        dropZoneSection.append(notebookList);
 
         dropZone.on("dragover", function(event) {
             event.preventDefault();
@@ -170,35 +200,35 @@ $(document).ready(function() {
 
         // dependencies
         const dependenciesSection = $('<div id="dependenciesSection">');
-        dependenciesSection.append('<header> <h1>Dependencies</h1> </header>');
+        dependenciesSection.append('<header> <h3>Dependencies</h3> </header>');
 
-        const predefinedImagesRadio = $('<input type="radio" id="dependenciesPredefined" name="dependenciesRadio" value="predefined">')
+        const predefinedImagesRadio = $('<input type="radio" id="dependenciesPredefined" name="dependenciesRadio" value="predefined" class="form-check-input">')
         dependenciesSection.append(predefinedImagesRadio);
         dependenciesSection.append('<label for="dependenciesPredefined">Predefined Docker Images</label><br>');
 
-        const predefinedImages = $('<select id="predefinedImages">');
+        const predefinedImages = $('<select id="predefinedImages" class="form-control">');
         dependenciesSection.append(predefinedImages);
 
-        const customImagesRadio = $('<input type="radio" id="dependenciesCustom" name="dependenciesRadio" value="custom">');
+        const customImagesRadio = $('<input type="radio" id="dependenciesCustom" name="dependenciesRadio" value="custom" class="form-check-input">');
         dependenciesSection.append('<br>');
         dependenciesSection.append(customImagesRadio);
         dependenciesSection.append('<label for="dependenciesCustom">Custom Docker Image</label><br>');
 
         dependenciesSection.append('<label for="customDockerImage">Docker Image Tag:</label>');
-        const customImages = $('<input type="text" id="customDockerImage" name="customDockerImage">');
-        dependenciesSection.append(customImages);
+        const customImage = $('<input type="text" id="customDockerImage" name="customDockerImage" class="form-control">');
+        dependenciesSection.append(customImage);
 
-        setupDependencies(predefinedImagesRadio, predefinedImages, customImagesRadio, customImages);
+        setupDependencies(predefinedImagesRadio, predefinedImages, customImagesRadio, customImage);
 
         // Hardware requirements
         const hardwareSection = $('<div id="hardwareSection">');
-        // hardwareSection.append('<header> <h1>Hardware</h1></header>');
+        // hardwareSection.append('<header> <h3>Hardware</h3></header>');
 
-        hardwareSection.append('<h2>GPUs</h2>');
-        const gpuList = $('<ul id="gpuList"></ul>');
+        hardwareSection.append('<h4>GPUs</h4>');
+        const gpuList = $('<ul id="gpuList" class="list-group"></ul>');
         refreshGpuList(gpuList);
         hardwareSection.append(gpuList);
-        const addGpuButton = $('<input id="addGpu" type="button" value="+">');
+        const addGpuButton = $('<button id="addGpu" type="button" class="btn btn-outline-secondary btn-sm">+</button>');
         addGpuButton.click(function () {
             gpuRequirements.push(DEFAULT_GPU_VRAM);
             refreshGpuList($('#gpuList'));
@@ -206,11 +236,11 @@ $(document).ready(function() {
         hardwareSection.append(addGpuButton);
 
         // submit button
-        const submitButton = $('<input type="button" name="submitButton" id="submitButton" value="Execute">');
+        const submitButton = $('<button type="button" name="submitButton" id="submitButton" class="btn btn-outline-primary">Execute</button>');
 
         submitButton.click(function() {
             if (jupyterNotebookEntries.length === 0) {
-                showError('Upload a jupyter notebook');
+                addAlert('info', 'You have to upload at least one jupyter notebook to execute.');
                 return;
             }
 
@@ -228,17 +258,24 @@ $(document).ready(function() {
                     gpuRequirements
                 })
             }).fail(function (e, statusText, errorMessage) {
+                addAlert('danger', 'Failed to execute the given notebook!');
                 console.error(errorMessage, e.responseText);
-                showError(e.responseText)
+            }).done(function(data, _statusText, _jqXHR) {
+                showResultView();
             })
+
+            jupyterNotebookEntries = [];
+            refreshNotebookList($('#notebookList'))
         });
 
-        const main = $('#main');
-        main.append(dropZone);
-        main.append(dependenciesSection);
-        main.append(hardwareSection);
-        main.append('<br>');
-        main.append(submitButton);
+        const submain = $('<div id="submain" class="container-fluid-sm">');
+
+        submain.append(dropZoneSection);
+        submain.append(dependenciesSection);
+        submain.append(hardwareSection);
+        submain.append('<br>');
+        submain.append(submitButton);
+        main.append(submain);
     }
 
     function formatTimestamp(timestamp) {
@@ -253,12 +290,14 @@ $(document).ready(function() {
 
     function addResultEntry(resultTable, notebookId, processStatus, notebookFilename, executionTime) {
         const row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td>' + formatTimestamp(executionTime) + '</td></tr>');
-        const downloadButton = $('<button>download</button>');
+        const downloadButton = $('<button class="btn btn-sm btn-outline-secondary">download</button>');
         downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
         })
         downloadButton.prop('disabled', processStatus !== 'success');
-        row.append(downloadButton);
+        const td = $('<td>');
+        td.append(downloadButton);
+        row.append(td);
 
         resultTable.append(row);
     }
@@ -267,22 +306,34 @@ $(document).ready(function() {
      * Creates the html elements for the result view and inserts them into the main div.
      */
     function showResultView() {
-        clearView();
-
-        // result table
-        let resultTable = $('<table id="resultTable" style="width:600px">');
-        resultTable.append('<tr><th>Name</th><th>Status</th><th>Time</th><th>Result</th></tr>')
-
         const main = $('#main');
-        main.append(resultTable);
+        clearView(main);
+        setupAlertSection(main);
+        setupNavbar(main, 'results');
+
+        // result section
+        const resultSection = $('<div id="resultSection" class="text-center">')
+        const resultTable = $('<table id="resultTable" class="table table-bordered table-hover table-sm">');
+        clearResultTable(resultTable);
+        resultSection.append(resultTable);
+
+        main.append(resultSection);
 
         refreshResults();
+    }
+
+    function clearResultTable(resultTable) {
+        resultTable.empty();
+        resultTable.append('<tr><th>Name</th><th>Status</th><th>Time</th><th>Result</th></tr>')
     }
 
     /**
      * Updates the result table entries by fetching the results
      */
     function refreshResults() {
+        const resultTable = $('#resultTable');
+        clearResultTable(resultTable);
+        $('#resultSection').append('<div id="resultSpinner" class="spinner-border text-muted"></div>');
         let url = getUrl('list_results')
         // noinspection JSIgnoredPromiseFromCall
         $.ajax({
@@ -291,21 +342,18 @@ $(document).ready(function() {
             dataType: 'json',
         }).done(function (data, _statusText, _jqXHR) {
             const resultTable = $('#resultTable')
+            clearResultTable(resultTable);
             for (let entry of data) {
                 addResultEntry(resultTable, entry['notebook_id'], entry['process_status'], entry['notebook_filename'], entry['execution_time']);
             }
+            $('#resultSpinner').remove();
         }).fail(function (_a, _b, e) {
+            const resultTable = $('#resultTable')
+            clearResultTable(resultTable);
             console.error('Failed to refresh job list: ', e);
+            addAlert('danger', 'Failed to refresh the job list!');
+            $('#resultSpinner').remove();
         });
-    }
-
-    /**
-     * Displays an error message to the user.
-     *
-     * @param errorMessage The message to show
-     */
-    function showError(errorMessage) {
-        $('#messages').append('<div class="flash">' + errorMessage + '</div>');
     }
 
     /**
@@ -318,8 +366,8 @@ $(document).ready(function() {
         let index = 0;
         for (const entry of jupyterNotebookEntries) {
             const tmpIndex = index;
-            const li = $('<li>' + entry.filename + '</li>');
-            const removeBtn = $('<input id="notebookRemove' + tmpIndex + '" type="button" value="x">')
+            const li = $('<li class="list-group-item border-0">' + entry.filename + '</li>');
+            const removeBtn = $('<button id="notebookRemove' + tmpIndex + '" type="button" class="close">&times</button>')
             removeBtn.click(function() {
                 jupyterNotebookEntries.splice(tmpIndex, 1);
                 refreshNotebookList($('#notebookList'));
@@ -350,8 +398,8 @@ $(document).ready(function() {
                     const res = ev.target.result.toString();
                     json = JSON.parse(res);
                 } catch (error) {
+                    addAlert('danger', 'Failed to decode the notebook!');
                     console.error('Error while decoding notebook.' + error + '\ncontent was: ' + ev.target.result);
-                    showError('Error while decoding notebook. ' + error);
                     return;
                 }
                 jupyterNotebookEntries.push(new NotebookEntry(json, file.name));
@@ -360,8 +408,6 @@ $(document).ready(function() {
             reader.readAsText(file);
         }
     }
-
-    setupNavbar();
 
     showExecutionView();
 });
