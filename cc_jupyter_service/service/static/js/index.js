@@ -144,10 +144,10 @@ $(document).ready(function() {
             gpuVram.change(function() {
                 gpuRequirements[tmpIndex] = parseInt(gpuVram.val().toString());
             })
-            const li = $('<li class="list-group-item"><label for="gpuVram' + tmpIndex + '" class="label">VRAM</label></li>');
+            const li = $('<li class="list-group-item"><label for="gpuVram' + tmpIndex + '" class="label">VRAM in MB</label></li>');
             li.append(gpuVram);
 
-            const removeBtn = $('<button id="gpuRemove' + tmpIndex + '" type="button" class="close closeGpu">&times</button>');
+            const removeBtn = $('<button id="gpuRemove' + tmpIndex + '" type="button" class="close closeGpu"><i class="fa fa-times-circle"></i></button>');
             removeBtn.click(function() {
                 gpuRequirements.splice(tmpIndex, 1);
                 refreshGpuList($('#gpuList'));
@@ -155,6 +155,9 @@ $(document).ready(function() {
             li.append(removeBtn);
             gpuList.append(li);
             index += 1;
+        }
+        if (gpuRequirements.length === 0) {
+            gpuList.append('<li class="list-group-item border-0 text-muted">No GPUs requested</li>');
         }
     }
 
@@ -224,11 +227,11 @@ $(document).ready(function() {
         const hardwareSection = $('<div id="hardwareSection">');
         // hardwareSection.append('<header> <h3>Hardware</h3></header>');
 
-        hardwareSection.append('<h4>GPUs</h4>');
+        hardwareSection.append('<h3>GPUs</h3>');
         const gpuList = $('<ul id="gpuList" class="list-group"></ul>');
         refreshGpuList(gpuList);
         hardwareSection.append(gpuList);
-        const addGpuButton = $('<button id="addGpu" type="button" class="btn btn-outline-secondary btn-sm">+</button>');
+        const addGpuButton = $('<button id="addGpu" type="button" class="btn"><i class="fa fa-plus-square" style="transform: scale(1.6);"></i></button>');
         addGpuButton.click(function () {
             gpuRequirements.push(DEFAULT_GPU_VRAM);
             refreshGpuList($('#gpuList'));
@@ -236,7 +239,7 @@ $(document).ready(function() {
         hardwareSection.append(addGpuButton);
 
         // submit button
-        const submitButton = $('<button type="button" name="submitButton" id="submitButton" class="btn btn-outline-primary">Execute</button>');
+        const submitButton = $('<button type="button" name="submitButton" id="submitButton" class="btn btn-outline-primary active">Execute</button>');
 
         submitButton.click(function() {
             if (jupyterNotebookEntries.length === 0) {
@@ -290,7 +293,7 @@ $(document).ready(function() {
 
     function addResultEntry(resultTable, notebookId, processStatus, notebookFilename, executionTime) {
         const row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td>' + formatTimestamp(executionTime) + '</td></tr>');
-        const downloadButton = $('<button class="btn btn-sm btn-outline-secondary">download</button>');
+        const downloadButton = $('<button class="btn btn-sm btn-outline-secondary"><i class="fa fa-download"></i></button>');
         downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
         })
@@ -367,7 +370,7 @@ $(document).ready(function() {
         for (const entry of jupyterNotebookEntries) {
             const tmpIndex = index;
             const li = $('<li class="list-group-item border-0">' + entry.filename + '</li>');
-            const removeBtn = $('<button id="notebookRemove' + tmpIndex + '" type="button" class="close">&times</button>')
+            const removeBtn = $('<button id="notebookRemove' + tmpIndex + '" type="button" class="close"><i class="fa fa-times-circle"></i></button>')
             removeBtn.click(function() {
                 jupyterNotebookEntries.splice(tmpIndex, 1);
                 refreshNotebookList($('#notebookList'));
