@@ -1,4 +1,5 @@
 import copy
+import time
 import uuid
 
 import requests
@@ -58,7 +59,9 @@ def exec_notebook(
     )
 
     database_api = DatabaseAPI.create()
-    database_api.create_notebook(notebook_id, notebook_token, g.user.user_id, experiment_id, notebook_filename)
+    database_api.create_notebook(
+        notebook_id, notebook_token, g.user.user_id, experiment_id, notebook_filename, int(time.time())
+    )
 
     return experiment_id
 

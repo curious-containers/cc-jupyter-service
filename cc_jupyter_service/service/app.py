@@ -235,7 +235,8 @@ def create_app():
             entries.append({
                 'notebook_id': notebook.notebook_id,
                 'process_status': str(notebook.status),
-                'notebook_filename': notebook.notebook_filename
+                'notebook_filename': notebook.notebook_filename,
+                'execution_time': notebook.execution_time
             })
         return jsonify(entries)
 

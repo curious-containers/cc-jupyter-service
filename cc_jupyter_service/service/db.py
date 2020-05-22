@@ -25,7 +25,9 @@ class DatabaseAPI:
             self.agency_url = agency_url
 
     class Notebook:
-        def __init__(self, db_id, notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id):
+        def __init__(
+            self, db_id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, user_id
+        ):
             """
             Creates a Notebook.
 
@@ -41,6 +43,8 @@ class DatabaseAPI:
             :type status: int
             :param notebook_filename: The filename of the notebook
             :type notebook_filename: str
+            :param execution_time: The timestamp of the execution of this notebook
+            :type execution_time: int
             :param user_id: The user id that executed this notebook
             :type user_id: int
             """
@@ -50,6 +54,7 @@ class DatabaseAPI:
             self.experiment_id = experiment_id
             self.status = DatabaseAPI.NotebookStatus.from_int(status)
             self.notebook_filename = notebook_filename
+            self.execution_time = execution_time
             self.user_id = user_id
 
         def get_filename_without_ext(self):
@@ -126,7 +131,7 @@ class DatabaseAPI:
         return DatabaseAPI(get_db())
 
     def create_notebook(
-            self, notebook_id, notebook_token, user_id, experiment_id, notebook_filename,
+            self, notebook_id, notebook_token, user_id, experiment_id, notebook_filename, execution_time,
             status=NotebookStatus.PROCESSING
     ):
         """
@@ -142,14 +147,19 @@ class DatabaseAPI:
         :type experiment_id: str
         :param notebook_filename: The filename of the notebook
         :type notebook_filename: str
+        :param execution_time: The timestamp of the notebook execution in seconds per epoch
+        :type execution_time: int
         :param status: The initial status of the notebook. Defaults to PROCESSING
         :type status: DatabaseAPI.NotebookStatus
         """
         self.db.execute(
-            'INSERT INTO notebook (notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id) '
-            'VALUES (?, ?, ?, ?, ?, ?)',
-            (notebook_id, generate_password_hash(notebook_token), experiment_id, int(status), notebook_filename,
-             user_id)
+            'INSERT INTO notebook ('
+            'notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, user_id'
+            ') VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (
+                notebook_id, generate_password_hash(notebook_token), experiment_id, int(status), notebook_filename,
+                execution_time, user_id
+            )
         )
         self.db.commit()
 
@@ -179,7 +189,7 @@ class DatabaseAPI:
         :raise DatabaseError: If the given notebook_id is not unique or could not be found
         """
         cur = self.db.execute(
-            'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id '
+            'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, user_id '
             'FROM notebook WHERE notebook_id is ?',
             (notebook_id,)
         )
@@ -193,7 +203,7 @@ class DatabaseAPI:
         if row is None:
             raise DatabaseError('NotebookID "{}" could not be found'.format(notebook_id))
 
-        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
 
     def get_notebooks(self, user_id, status=None):
         """
@@ -208,14 +218,16 @@ class DatabaseAPI:
         """
         if status is None:
             cur = self.db.execute(
-                'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id '
+                'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, '
+                'user_id '
                 'FROM notebook '
                 'WHERE user_id is ?',
                 (user_id,)
             )
         else:
             cur = self.db.execute(
-                'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, user_id '
+                'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, '
+                'user_id '
                 'FROM notebook '
                 'WHERE user_id is ? AND status is ?',
                 (user_id, int(status))
@@ -230,7 +242,8 @@ class DatabaseAPI:
                 experiment_id=notebook_data[3],
                 status=notebook_data[4],
                 notebook_filename=notebook_data[5],
-                user_id=notebook_data[6]
+                execution_time=notebook_data[6],
+                user_id=notebook_data[7]
             ))
         return notebooks
 

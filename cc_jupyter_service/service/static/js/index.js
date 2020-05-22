@@ -241,9 +241,19 @@ $(document).ready(function() {
         main.append(submitButton);
     }
 
-    function addResultEntry(resultTable, notebookId, processStatus, notebookFilename) {
-        let row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td></td></tr>');
-        let downloadButton = $('<button>download</button>');
+    function formatTimestamp(timestamp) {
+        const date = new Date(timestamp * 1000);
+        const now = new Date(Date.now());
+        let timeStr = '' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+        if (date.getFullYear() !== now.getFullYear() || date.getMonth() !== now.getMonth() || date.getDate() !== now.getDate()) {
+            timeStr = '' + date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + timeStr;
+        }
+        return timeStr;
+    }
+
+    function addResultEntry(resultTable, notebookId, processStatus, notebookFilename, executionTime) {
+        const row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td>' + formatTimestamp(executionTime) + '</td></tr>');
+        const downloadButton = $('<button>download</button>');
         downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
         })
@@ -261,7 +271,7 @@ $(document).ready(function() {
 
         // result table
         let resultTable = $('<table id="resultTable" style="width:600px">');
-        resultTable.append('<tr><th>Name</th><th>Status</th><th>Result</th></tr>')
+        resultTable.append('<tr><th>Name</th><th>Status</th><th>Time</th><th>Result</th></tr>')
 
         const main = $('#main');
         main.append(resultTable);
@@ -282,7 +292,7 @@ $(document).ready(function() {
         }).done(function (data, _statusText, _jqXHR) {
             const resultTable = $('#resultTable')
             for (let entry of data) {
-                addResultEntry(resultTable, entry['notebook_id'], entry['process_status'], entry['notebook_filename']);
+                addResultEntry(resultTable, entry['notebook_id'], entry['process_status'], entry['notebook_filename'], entry['execution_time']);
             }
         }).fail(function (_a, _b, e) {
             console.error('Failed to refresh job list: ', e);
