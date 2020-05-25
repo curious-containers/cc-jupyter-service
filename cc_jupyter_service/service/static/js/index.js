@@ -288,7 +288,7 @@ $(document).ready(function() {
                 }
 
             } else if (externalDataEntry.inputType === 'Directory') {
-                externalDataSubSection.append('Directory');
+
             }
         }
 
