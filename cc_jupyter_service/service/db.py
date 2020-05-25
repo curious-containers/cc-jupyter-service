@@ -87,6 +87,7 @@ class DatabaseAPI:
         PROCESSING = 0
         SUCCESS = 1
         FAILURE = 2
+        CANCELLED = 3
 
         def __str__(self):
             return self.name.lower()
@@ -106,9 +107,10 @@ class DatabaseAPI:
             return notebook_status
 
     EXPERIMENT_STATE_TO_NOTEBOOK_STATUS = {
+        'processing': NotebookStatus.PROCESSING,
         'succeeded': NotebookStatus.SUCCESS,
         'failed': NotebookStatus.FAILURE,
-        'cancelled': NotebookStatus.FAILURE
+        'cancelled': NotebookStatus.CANCELLED
     }
 
     def __init__(self, db):

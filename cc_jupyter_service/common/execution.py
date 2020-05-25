@@ -7,7 +7,7 @@ from flask import g
 from werkzeug.urls import url_join
 
 from cc_jupyter_service.common import red_file_template
-from cc_jupyter_service.common.helper import normalize_url, AUTHORIZATION_COOKIE_KEY
+from cc_jupyter_service.common.helper import normalize_url, AUTHORIZATION_COOKIE_KEY, AgencyError
 from cc_jupyter_service.service.db import DatabaseAPI
 
 
@@ -162,3 +162,43 @@ def start_agency(
     r.raise_for_status()
 
     return r.json()['experimentId']
+
+
+def cancel_batch(experiment_id, agency_url, authorization_cookie):
+    """
+    Cancels the batch of the given experiment id
+    :param experiment_id: The experiment to cancel. It is assumed that this experiment only contains one batch
+    :type experiment_id: str
+    :param agency_url: The agency url to use
+    :type agency_url: str
+    :param authorization_cookie: The authorization cookie value to use
+    :type authorization_cookie: str
+
+    :raise ValueError: If the experiment contains not only one batch
+    :raise AgencyError: If the batch id could not be found or the batch could not be cancelled
+    """
+    r = requests.get(
+        url_join(agency_url, 'batches?experimentId={}'.format(experiment_id)),
+        cookies={AUTHORIZATION_COOKIE_KEY: authorization_cookie}
+    )
+    try:
+        r.raise_for_status()
+    except requests.HTTPError as e:
+        raise AgencyError('Could not request the batch id. {}'.format(str(e)))
+
+    batches = r.json()
+
+    if len(batches) != 1:
+        raise ValueError('Experiment has more than one batch.\nNumber of batches: {}'.format(len(batches)))
+    batch_id = batches[0]['_id']
+
+    r = requests.delete(
+        url_join(agency_url, 'batches/{}'.format(batch_id)),
+        cookies={AUTHORIZATION_COOKIE_KEY: authorization_cookie}
+    )
+    try:
+        r.raise_for_status()
+    except requests.HTTPError as e:
+        raise AgencyError('Could not cancel batch {}. {}'.format(batch_id, str(e)))
+
+    return batch_id

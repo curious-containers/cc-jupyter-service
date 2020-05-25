@@ -9,11 +9,11 @@ import nbformat
 from werkzeug.security import check_password_hash
 from werkzeug.urls import url_join
 
-from cc_jupyter_service.common.helper import normalize_url, AUTHORIZATION_COOKIE_KEY
+from cc_jupyter_service.common.helper import normalize_url, AUTHORIZATION_COOKIE_KEY, AgencyError
 from cc_jupyter_service.service.db import DatabaseAPI
 import cc_jupyter_service.service.auth as auth
 import cc_jupyter_service.service.db as database_module
-from cc_jupyter_service.common.execution import exec_notebook
+from cc_jupyter_service.common.execution import exec_notebook, cancel_batch
 from cc_jupyter_service.common.notebook_database import NotebookDatabase
 from cc_jupyter_service.common.schema.request import request_schema
 from cc_jupyter_service.common.conf import Conf
@@ -248,6 +248,38 @@ def create_app():
         """
         result = list(map(lambda pdi: pdi.to_json(), conf.predefined_docker_images))
         return jsonify(result)
+
+    @app.route('/cancel_notebook', methods=['DELETE'])
+    @auth.login_required
+    def cancel_notebook():
+        """
+        Cancels the execution of the given notebook.
+        """
+        if not request.json:
+            raise BadRequest('Request should define notebook id in json data')
+
+        data = request.json
+        if (not isinstance(data, dict)) or ('notebookId' not in data):
+            raise BadRequest('Request should define notebook id in json data')
+        notebook_id = data['notebookId']
+
+        user = g.user
+
+        database_api = DatabaseAPI.create()
+        notebook = database_api.get_notebook(notebook_id)
+        if notebook.user_id != user.user_id:
+            raise Unauthorized('You cannot cancel notebooks of different users')
+
+        cookie = database_api.get_newest_cookie(user.user_id)
+        if cookie is None:
+            raise Unauthorized('No authorization cookie could be found')
+
+        try:
+            batch_id = cancel_batch(notebook.experiment_id, user.agency_url, cookie.cookie_text)
+        except (ValueError, AgencyError) as e:
+            raise BadRequest('Failed to cancel notebook: {}'.format(str(e)))
+
+        return jsonify({'batchId': batch_id})
 
     database_module.init_app(app)
 

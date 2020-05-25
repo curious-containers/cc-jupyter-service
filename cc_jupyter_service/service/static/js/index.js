@@ -182,6 +182,7 @@ $(document).ready(function() {
         // drop zone
         const dropZoneSection = $('<div id="dropZoneSection">');
         dropZoneSection.append('<h3>Jupyter Notebook</h3>');
+        dropZoneSection.append('Drop notebook file here:');
         const dropZone = $('<div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>');
         dropZoneSection.append(dropZone);
 
@@ -281,24 +282,55 @@ $(document).ready(function() {
         main.append(submain);
     }
 
+    function padZero(i) {
+        const s = '' + i;
+        if (s.length === 1) {
+            return '0' + s;
+        }
+        return s;
+    }
+
     function formatTimestamp(timestamp) {
         const date = new Date(timestamp * 1000);
         const now = new Date(Date.now());
-        let timeStr = '' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+        let timeStr = '' + padZero(date.getHours()) + ':' + padZero(date.getMinutes()) + ':' + padZero(date.getSeconds());
         if (date.getFullYear() !== now.getFullYear() || date.getMonth() !== now.getMonth() || date.getDate() !== now.getDate()) {
-            timeStr = '' + date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + timeStr;
+            timeStr = timeStr + '\t' + padZero(date.getDate()) + '-' + padZero((date.getMonth()+1)) + '-' + date.getFullYear();
         }
         return timeStr;
     }
 
     function addResultEntry(resultTable, notebookId, processStatus, notebookFilename, executionTime) {
         const row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td>' + formatTimestamp(executionTime) + '</td></tr>');
+
+        // download button
         const downloadButton = $('<button class="btn btn-sm btn-outline-secondary"><i class="fa fa-download"></i></button>');
         downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
         })
         downloadButton.prop('disabled', processStatus !== 'success');
+
+        // cancel button
+        const cancelButton = $('<button class="btn btn-sm btn-outline-secondary"><i class="fa fa-times-circle"></i></button>')
+        cancelButton.click(function() {
+            const url = getUrl('cancel_notebook')
+            // noinspection JSIgnoredPromiseFromCall
+            $.ajax({
+                url,
+                method: 'DELETE',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({'notebookId': notebookId})
+            }).done(function (_data, _statusText, _jqXHR) {
+                refreshResults();
+            }).fail(function (_a, _b, e) {
+                addAlert('danger', 'Failed to cancel the notebook execution');
+                console.error('Failed to cancel notebook ', notebookId, '\nerror: ', e);
+            });
+        });
+        cancelButton.prop('disabled', processStatus !== 'processing');
         const td = $('<td>');
+        td.append(cancelButton);
         td.append(downloadButton);
         row.append(td);
 
@@ -327,7 +359,7 @@ $(document).ready(function() {
 
     function clearResultTable(resultTable) {
         resultTable.empty();
-        resultTable.append('<tr><th>Name</th><th>Status</th><th>Time</th><th>Result</th></tr>')
+        resultTable.append('<tr><th>Name</th><th>Status</th><th>Time</th><th>Actions</th></tr>')
     }
 
     /**
