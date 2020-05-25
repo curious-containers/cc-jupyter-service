@@ -1,11 +1,22 @@
 #addGpu {
     display: block;
     margin-top: 5px;
-    color: gray;
+    color: black;
 }
 
+/*
 #addGpu:hover {
-    color: darkslategray;
+    color: blue;
+}
+*/
+
+.no-break {
+    display: inline-block;
+}
+
+#addExternalData {
+    display: block;
+    margin-top: 5px;
 }
 
 h3 {
@@ -27,6 +38,10 @@ input.form-control {
     width:auto !important;
 }
 
+#externalDataList {
+    width: 550px;
+}
+
 #submain {
     margin-left: 40px;
 }
@@ -39,7 +54,7 @@ nav {
     margin-bottom: 20px;
 }
 
-button.closeGpu {
+button.fixPadding {
     padding-top: 5px;
 }
 

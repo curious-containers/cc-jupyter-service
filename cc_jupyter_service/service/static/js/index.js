@@ -10,6 +10,26 @@ $(document).ready(function() {
         }
     }
 
+    class ExternalDataEntry {
+        inputName;
+        inputType;
+        connectorType;
+        host;
+        filepath;
+        username;
+        password;
+
+        constructor(inputName=null, inputType=null, connectorType=null, host=null, filepath=null, username=null, password=null) {
+            this.inputName = inputName;
+            this.inputType = inputType;
+            this.connectorType = connectorType;
+            this.host = host;
+            this.filepath = filepath;
+            this.username = username;
+            this.password = password;
+        }
+    }
+
     let jupyterNotebookEntries = [];
     const dependenciesSelection = {
         custom: false,
@@ -18,6 +38,7 @@ $(document).ready(function() {
     }
     let globalPredefinedImages = [];
     let gpuRequirements = [];
+    let externalDataInfo = [];
 
     /**
      * Fetches the predefined docker images from the server
@@ -112,7 +133,6 @@ $(document).ready(function() {
             predefinedImages.append(option);
             option.prop('selected', predefinedImageId.name === dependenciesSelection.predefinedImage);
         }
-        predefinedImages.append()
 
         customImages.val(dependenciesSelection.customImage);
 
@@ -147,7 +167,7 @@ $(document).ready(function() {
             const li = $('<li class="list-group-item"><label for="gpuVram' + tmpIndex + '" class="label">VRAM in MB</label></li>');
             li.append(gpuVram);
 
-            const removeBtn = $('<button id="gpuRemove' + tmpIndex + '" type="button" class="close closeGpu"><i class="fa fa-times-circle"></i></button>');
+            const removeBtn = $('<button id="gpuRemove' + tmpIndex + '" type="button" class="close fixPadding"><i class="fa fa-times-circle"></i></button>');
             removeBtn.click(function() {
                 gpuRequirements.splice(tmpIndex, 1);
                 refreshGpuList($('#gpuList'));
@@ -167,6 +187,122 @@ $(document).ready(function() {
         alert.append('<button type="button" class="close" data-dismiss="alert">&times</button>');
         alert.append(text);
         alertSection.append(alert);
+    }
+
+    function refreshExternalDataList(externalDataList) {
+        externalDataList.empty();
+        let index = 0;
+
+        function refreshExternalDataSubSection(externalDataSubSection, externalDataEntry, elemIndex) {
+            externalDataSubSection.empty();
+            externalDataSubSection.append('<label for="externalDataInputName' + elemIndex + '">Input Name: </label>');
+            const inputNameInput = $('<input type="text" id="externalDataInputName' + elemIndex + '" class="form-control no-break">');
+            inputNameInput.keyup(function() {
+                externalDataEntry.inputName = inputNameInput.val();
+            })
+            inputNameInput.val(externalDataEntry.inputName);
+            externalDataSubSection.append(inputNameInput);
+            const typeSelect = $('<select id="externalDataTypeSelect' + elemIndex + '">')
+
+            for (const opt of [null, 'File', 'Directory']) {
+                let text = opt;
+                if (opt == null) text = '-';
+                const option = $('<option value="' + opt + '">' + text + '</option>');
+                option.prop('selected', externalDataEntry.inputType === opt);
+                typeSelect.append(option);
+            }
+
+            typeSelect.change(function () {
+                let val = typeSelect.val();
+                if (val === 'null') {
+                    val = null;
+                }
+                externalDataInfo[elemIndex].inputType = val;
+                refreshExternalDataSubSection(externalDataSubSection, externalDataEntry, elemIndex);
+            });
+            externalDataSubSection.append(typeSelect);
+
+            const removeExternalDataEntryButton = $('<button id="externalDataRemove' + elemIndex + '" type="button" class="close fixPadding"><i class="fa fa-times-circle"></i></button>');
+            removeExternalDataEntryButton.click(function() {
+                externalDataInfo.splice(elemIndex, 1);
+                refreshExternalDataList($('#externalDataList'))
+            })
+            externalDataSubSection.append(removeExternalDataEntryButton);
+
+            if (externalDataEntry.inputType === null) {
+            } else if (externalDataEntry.inputType === 'File') {
+                const connectorTypeSelect = $('<select id="externalDataConnectorTypeSelect' + elemIndex + '">');
+                for (const opt of [null, 'SSH']) {
+                    let text = opt;
+                    if (opt == null) text = '-';
+                    const option = $('<option value="' + opt + '">' + text + '</option>');
+                    option.prop('selected', externalDataEntry.connectorType === opt);
+                    connectorTypeSelect.append(option);
+                }
+                connectorTypeSelect.change(function() {
+                    let val = connectorTypeSelect.val();
+                    if (val === 'null') {
+                        val = null;
+                    }
+                    externalDataEntry.connectorType = val;
+                    refreshExternalDataSubSection(externalDataSubSection, externalDataEntry, elemIndex);
+                });
+                externalDataSubSection.append(connectorTypeSelect);
+
+                if (externalDataEntry.connectorType === 'SSH') {
+                    externalDataSubSection.append('<br>');
+                    externalDataSubSection.append('<label for="externalDataHost' + elemIndex + '">Host: </label>');
+                    const hostInput = $('<input type="text" id="externalDataHost' + elemIndex + '" class="form-control no-break">');
+                    hostInput.keyup(function() {
+                        externalDataEntry.host = hostInput.val();
+                    })
+                    hostInput.val(externalDataEntry.host);
+                    externalDataSubSection.append(hostInput);
+
+                    externalDataSubSection.append('<br>');
+                    externalDataSubSection.append('<label for="externalDataFilePath' + elemIndex + '">Filepath: </label>');
+                    const filePathInput = $('<input type="text" id="externalDataFilePath' + elemIndex + '" class="form-control no-break">');
+                    filePathInput.keyup(function() {
+                        externalDataEntry.filepath = filePathInput.val();
+                    })
+                    filePathInput.val(externalDataEntry.filepath);
+                    externalDataSubSection.append(filePathInput);
+
+                    externalDataSubSection.append('<br>');
+                    externalDataSubSection.append('<label for="externalDataUsername' + elemIndex + '">Username: </label>');
+                    const usernameInput = $('<input type="text" id="externalDataUsername' + elemIndex + '" class="form-control no-break">');
+                    usernameInput.keyup(function() {
+                        externalDataEntry.username = usernameInput.val();
+                    })
+                    usernameInput.val(externalDataEntry.username);
+                    externalDataSubSection.append(usernameInput);
+
+                    externalDataSubSection.append('<br>');
+                    externalDataSubSection.append('<label for="externalDataPassword' + elemIndex + '">Password: </label>');
+                    const passwordInput = $('<input type="password" id="externalDataPassword' + elemIndex + '" class="form-control no-break">');
+                    passwordInput.keyup(function() {
+                        externalDataEntry.password = passwordInput.val();
+                    })
+                    passwordInput.val(externalDataEntry.password);
+                    externalDataSubSection.append(passwordInput);
+                }
+
+            } else if (externalDataEntry.inputType === 'Directory') {
+                externalDataSubSection.append('Directory');
+            }
+        }
+
+        for (const externalDataEntry of externalDataInfo) {
+            const tmpIndex = index;
+            const externalDataSubSection = $('<li class="list-group-item" id="externalDataSubSection' + tmpIndex + '">');
+            refreshExternalDataSubSection(externalDataSubSection, externalDataEntry, tmpIndex);
+            externalDataList.append(externalDataSubSection);
+            index += 1;
+        }
+
+        if (externalDataInfo.length === 0) {
+            externalDataList.append('<li class="list-group-item border-0 text-muted">No external data stated</li>');
+        }
     }
 
     /**
@@ -226,7 +362,6 @@ $(document).ready(function() {
 
         // Hardware requirements
         const hardwareSection = $('<div id="hardwareSection">');
-        // hardwareSection.append('<header> <h3>Hardware</h3></header>');
 
         hardwareSection.append('<h3>GPUs</h3>');
         const gpuList = $('<ul id="gpuList" class="list-group"></ul>');
@@ -238,6 +373,19 @@ $(document).ready(function() {
             refreshGpuList($('#gpuList'));
         })
         hardwareSection.append(addGpuButton);
+
+        // external data
+        const externalDataSection = $('<div id="externalDataSection">');
+        externalDataSection.append('<h3>External Data');
+        const externalDataList = $('<ul id="externalDataList" class="list-group">');
+        refreshExternalDataList(externalDataList);
+        externalDataSection.append(externalDataList);
+        const addExternalDataButton = $('<button id="addExternalData" type="button" class="btn"><i class="fa fa-plus-square" style="transform: scale(1.6);"></i></button>');
+        addExternalDataButton.click(function() {
+            externalDataInfo.push(new ExternalDataEntry());
+            refreshExternalDataList($('#externalDataList'));
+        })
+        externalDataSection.append(addExternalDataButton);
 
         // submit button
         const submitButton = $('<button type="button" name="submitButton" id="submitButton" class="btn btn-outline-primary active">Execute</button>');
@@ -259,7 +407,8 @@ $(document).ready(function() {
                 data: JSON.stringify({
                     jupyterNotebooks: jupyterNotebookEntries,
                     dependencies: dependenciesSelection,
-                    gpuRequirements
+                    gpuRequirements,
+                    // externalData: externalDataInfo
                 })
             }).fail(function (e, statusText, errorMessage) {
                 addAlert('danger', 'Failed to execute the given notebook!');
@@ -277,6 +426,7 @@ $(document).ready(function() {
         submain.append(dropZoneSection);
         submain.append(dependenciesSection);
         submain.append(hardwareSection);
+        submain.append(externalDataSection);
         submain.append('<br>');
         submain.append(submitButton);
         main.append(submain);
