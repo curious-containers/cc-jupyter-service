@@ -27,6 +27,17 @@ request_schema = {
                 'type': 'integer',
                 'minimum': 0
             }
+        },
+        'externalData': {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'inputName': {'type': 'string'},
+                    'inputType': {'oneOf': ['File', 'Directory']},
+                    'connectorType': {'type': 'string'},
+                }
+            }
         }
     },
     'additionalProperties': False,

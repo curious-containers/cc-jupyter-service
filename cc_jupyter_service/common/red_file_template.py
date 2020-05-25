@@ -13,6 +13,12 @@ RED_FILE_TEMPLATE = {
             "outputNotebookFilename": {
                 "type": "string",
                 "inputBinding": {"position": 2}
+            },
+            "inputParameters": {
+                "type": "string?",
+                "inputBinding": {
+                    "prefix": "--parameters"
+                }
             }
         },
         "outputs": {

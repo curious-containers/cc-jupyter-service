@@ -16,7 +16,7 @@ DEFAULT_DOCKER_IMAGE = 'bruno1996/cc_jupyterservice_base_image'
 
 def exec_notebook(
         notebook_data, agency_url, agency_username, agency_authorization_cookie, notebook_database, url_root,
-        docker_image, gpu_requirements, notebook_filename
+        docker_image, gpu_requirements, notebook_filename, external_data
 ):
     """
     - Validates the agency authentication information
@@ -42,6 +42,9 @@ def exec_notebook(
     :type gpu_requirements: object or None
     :param notebook_filename: The filename of the notebook
     :type notebook_data: str
+    :param external_data: A dictionary containing information about external data. Should at least contain the keys
+                          ['inputName', 'inputType', 'connectorType']
+    :type external_data: dict
 
     :return: The experiment id of the executed experiment
     :rtype: str
@@ -55,7 +58,7 @@ def exec_notebook(
 
     experiment_id = start_agency(
         notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root, docker_image,
-        gpu_requirements
+        gpu_requirements, external_data
     )
 
     database_api = DatabaseAPI.create()
@@ -67,7 +70,8 @@ def exec_notebook(
 
 
 def _create_red_data(
-        notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image, gpu_requirements
+        notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image, gpu_requirements,
+        external_data
 ):
     """
     Creates the red data that can be used for execution on an agency.
@@ -86,6 +90,9 @@ def _create_red_data(
     :type docker_image: str
     :param gpu_requirements: The gpu requirements of the request
     :type gpu_requirements: object or None
+    :param external_data: A dictionary containing information about external data. Should at least contain the keys
+                          ['inputName', 'inputType', 'connectorType']
+    :type external_data: dict
 
     :return: The red data filled with the given information to execute on an agency
     """
@@ -117,12 +124,17 @@ def _create_red_data(
     if gpu_requirements is not None:
         container_settings['gpus'] = gpu_requirements
 
+    # external data
+    red_data['inputs']['inputParameters'] = {
+        
+    }
+
     return red_data
 
 
 def start_agency(
         notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root, docker_image,
-        gpu_requirements
+        gpu_requirements, external_data
 ):
     """
     Executes the given notebook on the given agency.
@@ -143,6 +155,9 @@ def start_agency(
     :type docker_image: str
     :param gpu_requirements: The gpu requirements of the request
     :type gpu_requirements: object or None
+    :param external_data: A dictionary containing information about external data. Should at least contain the keys
+                          ['inputName', 'inputType', 'connectorType']
+    :type external_data: dict
 
     :return: The experiment id of the started experiment
     :rtype: str
@@ -150,7 +165,8 @@ def start_agency(
     :raise HTTPError: If the red post failed
     """
     red_data = _create_red_data(
-        notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image, gpu_requirements
+        notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image, gpu_requirements,
+        external_data
     )
 
     r = requests.post(

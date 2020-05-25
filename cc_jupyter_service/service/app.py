@@ -138,6 +138,8 @@ def create_app():
 
         gpu_requirements = create_gpu_requirements(request_data['gpuRequirements'])
 
+        external_data = request_data['externalData']
+
         for jupyter_notebook in request_data['jupyterNotebooks']:
             try:
                 experiment_id = exec_notebook(
@@ -149,7 +151,8 @@ def create_app():
                     url_root=request.url_root,
                     docker_image=docker_image,
                     gpu_requirements=gpu_requirements,
-                    notebook_filename=jupyter_notebook['filename']
+                    notebook_filename=jupyter_notebook['filename'],
+                    external_data=external_data
                 )
             except HTTPError as e:
                 raise BadRequest('Could not execute {}. {}'.format(jupyter_notebook['filename'], str(e)))

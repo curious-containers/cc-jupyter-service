@@ -408,7 +408,7 @@ $(document).ready(function() {
                     jupyterNotebooks: jupyterNotebookEntries,
                     dependencies: dependenciesSelection,
                     gpuRequirements,
-                    // externalData: externalDataInfo
+                    externalData: externalDataInfo
                 })
             }).fail(function (e, statusText, errorMessage) {
                 addAlert('danger', 'Failed to execute the given notebook!');
