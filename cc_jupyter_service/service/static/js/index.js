@@ -295,7 +295,7 @@ $(document).ready(function() {
         const now = new Date(Date.now());
         let timeStr = '' + padZero(date.getHours()) + ':' + padZero(date.getMinutes()) + ':' + padZero(date.getSeconds());
         if (date.getFullYear() !== now.getFullYear() || date.getMonth() !== now.getMonth() || date.getDate() !== now.getDate()) {
-            timeStr = timeStr + '\t' + padZero(date.getDate()) + '-' + padZero((date.getMonth()+1)) + '-' + date.getFullYear();
+            timeStr = timeStr + '&nbsp;&nbsp;&nbsp;' + padZero(date.getDate()) + '-' + padZero((date.getMonth()+1)) + '-' + date.getFullYear();
         }
         return timeStr;
     }
