@@ -3,7 +3,7 @@ RED_FILE_TEMPLATE = {
     "cli": {
         "cwlVersion": "v1.0",
         "class": "CommandLineTool",
-        "baseCommand": ["papermill"],
+        "baseCommand": ["papermill_wrapper.py"],
         "doc": "Executes a jupyter notebook",
         "inputs": {
             "inputNotebook": {
@@ -13,12 +13,6 @@ RED_FILE_TEMPLATE = {
             "outputNotebookFilename": {
                 "type": "string",
                 "inputBinding": {"position": 2}
-            },
-            "inputParameters": {
-                "type": "string?",
-                "inputBinding": {
-                    "prefix": "--parameters"
-                }
             }
         },
         "outputs": {

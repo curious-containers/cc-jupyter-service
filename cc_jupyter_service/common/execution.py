@@ -42,8 +42,8 @@ def exec_notebook(
     :type gpu_requirements: object or None
     :param notebook_filename: The filename of the notebook
     :type notebook_data: str
-    :param external_data: A dictionary containing information about external data. Should at least contain the keys
-                          ['inputName', 'inputType', 'connectorType']
+    :param external_data: A list of dictionaries containing information about external data.
+                          Should at least contain the keys ['inputName', 'inputType', 'connectorType']
     :type external_data: dict
 
     :return: The experiment id of the executed experiment
@@ -90,11 +90,13 @@ def _create_red_data(
     :type docker_image: str
     :param gpu_requirements: The gpu requirements of the request
     :type gpu_requirements: object or None
-    :param external_data: A dictionary containing information about external data. Should at least contain the keys
-                          ['inputName', 'inputType', 'connectorType']
+    :param external_data: A list of dictionaries containing information about external data.
+                          Should at least contain the keys ['inputName', 'inputType', 'connectorType']
     :type external_data: dict
 
     :return: The red data filled with the given information to execute on an agency
+
+    :raise ValueError: If an unsupported external data connector type is specified.
     """
     red_data = copy.deepcopy(red_file_template.RED_FILE_TEMPLATE)
 
@@ -124,10 +126,42 @@ def _create_red_data(
     if gpu_requirements is not None:
         container_settings['gpus'] = gpu_requirements
 
+    # TODO handle directories
     # external data
-    red_data['inputs']['inputParameters'] = {
-        
-    }
+    cli_inputs = red_data['cli']['inputs']
+    for external_datum in external_data:
+        if external_datum['connectorType'] == 'SSH':
+            input_name = external_datum['inputName']
+
+            # add cli specification
+            cli_inputs[input_name] = {
+                'type': external_datum['inputType'],
+                'inputBinding': {
+                    'prefix': input_name + '=',
+                    'separate': False
+                }
+            }
+
+            # add input specification
+            red_data['inputs'][input_name] = {
+                'class': external_datum['inputType'],
+                'connector': {
+                    'command': 'red-connector-ssh',
+                    'access': {
+                        'host': external_datum['host'],
+                        'auth': {
+                            'username': external_datum['username'],
+                            'password': external_datum['password']
+                        },
+                        'filePath': external_datum['filepath']
+                    }
+                }
+            }
+        else:
+            raise ValueError(
+                'Connector Types different from SSH are currently not supported. Got connector type: {}'
+                .format(external_datum['connectorType'])
+            )
 
     return red_data
 
@@ -155,8 +189,8 @@ def start_agency(
     :type docker_image: str
     :param gpu_requirements: The gpu requirements of the request
     :type gpu_requirements: object or None
-    :param external_data: A dictionary containing information about external data. Should at least contain the keys
-                          ['inputName', 'inputType', 'connectorType']
+    :param external_data: A list of dictionaries containing information about external data.
+                          Should at least contain the keys ['inputName', 'inputType', 'connectorType']
     :type external_data: dict
 
     :return: The experiment id of the started experiment

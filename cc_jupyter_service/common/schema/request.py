@@ -34,7 +34,10 @@ request_schema = {
                 'type': 'object',
                 'properties': {
                     'inputName': {'type': 'string'},
-                    'inputType': {'oneOf': ['File', 'Directory']},
+                    'inputType': {
+                        'type': 'string',
+                        'enum': ['File', 'Directory']
+                    },
                     'connectorType': {'type': 'string'},
                 }
             }
