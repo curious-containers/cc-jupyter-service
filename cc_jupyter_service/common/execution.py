@@ -126,7 +126,7 @@ def _create_red_data(
     if gpu_requirements is not None:
         container_settings['gpus'] = gpu_requirements
 
-    # TODO handle directories
+    # TODO: validate external data information before accessing it
     # external data
     cli_inputs = red_data['cli']['inputs']
     for external_datum in external_data:
@@ -152,11 +152,17 @@ def _create_red_data(
                         'auth': {
                             'username': external_datum['username'],
                             'password': external_datum['password']
-                        },
-                        'filePath': external_datum['filepath']
+                        }
                     }
                 }
             }
+            if external_datum['inputType'] == 'File':
+                red_data['inputs'][input_name]['connector']['access']['filePath'] = external_datum['path']
+            elif external_datum['inputType'] == 'Directory':
+                red_data['inputs'][input_name]['connector']['access']['dirPath'] = external_datum['path']
+                red_data['inputs'][input_name]['connector']['mount'] = external_datum['mount']
+            else:
+                raise ValueError('Unknown inputType "{}" for "{}"'.format(external_datum['inputType'], input_name))
         else:
             raise ValueError(
                 'Connector Types different from SSH are currently not supported. Got connector type: {}'
@@ -209,7 +215,12 @@ def start_agency(
         json=red_data
     )
 
-    r.raise_for_status()
+    try:
+        r.raise_for_status()
+    except Exception as e:
+        print(e, flush=True)
+        print(r.text, flush=True)
+        raise
 
     return r.json()['experimentId']
 

@@ -15,18 +15,20 @@ $(document).ready(function() {
         inputType;
         connectorType;
         host;
-        filepath;
+        path;
         username;
         password;
+        mount;
 
-        constructor(inputName=null, inputType=null, connectorType=null, host=null, filepath=null, username=null, password=null) {
+        constructor(inputName=null, inputType=null, connectorType=null, host=null, path=null, username=null, password=null, mount=null) {
             this.inputName = inputName;
             this.inputType = inputType;
             this.connectorType = connectorType;
             this.host = host;
-            this.filepath = filepath;
+            this.path = path;
             this.username = username;
             this.password = password;
+            this.mount = mount;
         }
     }
 
@@ -263,9 +265,9 @@ $(document).ready(function() {
                     externalDataSubSection.append('<label for="externalDataFilePath' + elemIndex + '">Filepath: </label>');
                     const filePathInput = $('<input type="text" id="externalDataFilePath' + elemIndex + '" class="form-control no-break">');
                     filePathInput.keyup(function() {
-                        externalDataEntry.filepath = filePathInput.val();
+                        externalDataEntry.path = filePathInput.val();
                     })
-                    filePathInput.val(externalDataEntry.filepath);
+                    filePathInput.val(externalDataEntry.path);
                     externalDataSubSection.append(filePathInput);
 
                     externalDataSubSection.append('<br>');
@@ -286,9 +288,73 @@ $(document).ready(function() {
                     passwordInput.val(externalDataEntry.password);
                     externalDataSubSection.append(passwordInput);
                 }
-
             } else if (externalDataEntry.inputType === 'Directory') {
+                const connectorTypeSelect = $('<select id="externalDataConnectorTypeSelect' + elemIndex + '">');
+                for (const opt of [null, 'SSH']) {
+                    let text = opt;
+                    if (opt == null) text = '-';
+                    const option = $('<option value="' + opt + '">' + text + '</option>');
+                    option.prop('selected', externalDataEntry.connectorType === opt);
+                    connectorTypeSelect.append(option);
+                }
+                connectorTypeSelect.change(function() {
+                    let val = connectorTypeSelect.val();
+                    if (val === 'null') {
+                        val = null;
+                    }
+                    externalDataEntry.connectorType = val;
+                    refreshExternalDataSubSection(externalDataSubSection, externalDataEntry, elemIndex);
+                });
+                externalDataSubSection.append(connectorTypeSelect);
 
+                if (externalDataEntry.connectorType === 'SSH') {
+                    externalDataSubSection.append('<br>');
+                    externalDataSubSection.append('<label for="externalDataHost' + elemIndex + '">Host: </label>');
+                    const hostInput = $('<input type="text" id="externalDataHost' + elemIndex + '" class="form-control no-break">');
+                    hostInput.keyup(function() {
+                        externalDataEntry.host = hostInput.val();
+                    });
+                    hostInput.val(externalDataEntry.host);
+                    externalDataSubSection.append(hostInput);
+
+                    externalDataSubSection.append('<br>');
+                    externalDataSubSection.append('<label for="externalDataDirPath' + elemIndex + '">Directory path: </label>');
+                    const dirPathInput = $('<input type="text" id="externalDataDirPath' + elemIndex + '" class="form-control no-break">');
+                    dirPathInput.keyup(function() {
+                        externalDataEntry.path = dirPathInput.val();
+                    });
+                    dirPathInput.val(externalDataEntry.path);
+                    externalDataSubSection.append(dirPathInput);
+
+                    externalDataSubSection.append('<br>');
+                    externalDataSubSection.append('<label for="externalDataUsername' + elemIndex + '">Username: </label>');
+                    const usernameInput = $('<input type="text" id="externalDataUsername' + elemIndex + '" class="form-control no-break">');
+                    usernameInput.keyup(function() {
+                        externalDataEntry.username = usernameInput.val();
+                    });
+                    usernameInput.val(externalDataEntry.username);
+                    externalDataSubSection.append(usernameInput);
+
+                    externalDataSubSection.append('<br>');
+                    externalDataSubSection.append('<label for="externalDataPassword' + elemIndex + '">Password: </label>');
+                    const passwordInput = $('<input type="password" id="externalDataPassword' + elemIndex + '" class="form-control no-break">');
+                    passwordInput.keyup(function() {
+                        externalDataEntry.password = passwordInput.val();
+                    });
+                    passwordInput.val(externalDataEntry.password);
+                    externalDataSubSection.append(passwordInput);
+
+                    externalDataSubSection.append('<br>');
+                    const mountLabel = $('<label for="externalDataMount' + elemIndex + '"></label>');
+                    externalDataSubSection.append(mountLabel);
+                    const mountInput = $('<input type="checkbox" id="externalDataMount' + elemIndex + '" value="">');
+                    mountInput.change(function() {
+                        externalDataEntry.mount = mountInput.prop('checked');
+                    });
+                    mountInput.prop('checked', externalDataEntry.mount);
+                    mountLabel.append(mountInput);
+                    mountLabel.append('Mount')
+                }
             }
         }
 
