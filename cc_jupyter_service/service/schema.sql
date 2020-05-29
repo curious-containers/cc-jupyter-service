@@ -18,6 +18,7 @@ CREATE TABLE notebook (
   status INTEGER NOT NULL,  -- 0: processing   1: succeeded   2: failed
   notebook_filename TEXT NOT NULL,
   execution_time INTEGER NOT NULL,
+  debug_info TEXT,
   user_id INTEGER,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );

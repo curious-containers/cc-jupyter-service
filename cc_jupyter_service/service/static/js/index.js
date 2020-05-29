@@ -521,7 +521,7 @@ $(document).ready(function() {
         return timeStr;
     }
 
-    function addResultEntry(resultTable, notebookId, processStatus, notebookFilename, executionTime) {
+    function addResultEntry(elemIndex, resultTable, notebookId, processStatus, notebookFilename, executionTime, debugInfo) {
         const row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td>' + formatTimestamp(executionTime) + '</td></tr>');
 
         // download button
@@ -532,7 +532,7 @@ $(document).ready(function() {
         downloadButton.prop('disabled', processStatus !== 'success');
 
         // cancel button
-        const cancelButton = $('<button class="btn btn-sm btn-outline-secondary"><i class="fa fa-times-circle"></i></button>')
+        const cancelButton = $('<button class="btn btn-sm btn-outline-secondary"><i class="fa fa-times-circle"></i></button>');
         cancelButton.click(function() {
             const url = getUrl('cancel_notebook')
             // noinspection JSIgnoredPromiseFromCall
@@ -550,9 +550,33 @@ $(document).ready(function() {
             });
         });
         cancelButton.prop('disabled', processStatus !== 'processing');
+
+        // show debug info button
+        const showDebugInfoButton = $('<button class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#debugInfoModal' + elemIndex + '">Debug</button>');
+        const showDebugInfoModal = $(
+            '<div class="modal fade" id="debugInfoModal' + elemIndex + '" role="dialog">' +
+            '<div class="modal-dialog modal-lg">' +
+            '<div class="modal-content">' +
+            '<div class="modal-header">' +
+            '<h4 class="modal-title">Debug Information</h4>' +
+            '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
+            '</div>' +
+            '<div id="debugInfoModalBody' + elemIndex + '" class="modal-body">' +
+            '</div>' +
+            '<div class="modal-footer">' +
+            '<button type="button" class="btn btn-default btn-outline-secondary" data-dismiss="modal">Close</button>'
+        );
+        const debugInfoModalBody = showDebugInfoModal.find('#debugInfoModalBody' + elemIndex);
+        for (const debugInfoLine of debugInfo.split('\n')) {
+            debugInfoModalBody.append('<p class="pull-left m-1">' + debugInfoLine + '</p>');
+        }
+
+        // td
         const td = $('<td>');
         td.append(cancelButton);
         td.append(downloadButton);
+        td.append(showDebugInfoButton);
+        td.append(showDebugInfoModal);
         row.append(td);
 
         resultTable.append(row);
@@ -599,8 +623,10 @@ $(document).ready(function() {
         }).done(function (data, _statusText, _jqXHR) {
             const resultTable = $('#resultTable')
             clearResultTable(resultTable);
+            let index = 0;
             for (let entry of data) {
-                addResultEntry(resultTable, entry['notebook_id'], entry['process_status'], entry['notebook_filename'], entry['execution_time']);
+                addResultEntry(index, resultTable, entry['notebook_id'], entry['process_status'], entry['notebook_filename'], entry['execution_time'], entry['debug_info']);
+                index += 1;
             }
             $('#resultSpinner').remove();
         }).fail(function (_a, _b, e) {

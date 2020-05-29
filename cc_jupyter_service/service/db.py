@@ -26,7 +26,8 @@ class DatabaseAPI:
 
     class Notebook:
         def __init__(
-            self, db_id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, user_id
+            self, db_id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time,
+            debug_info, user_id
         ):
             """
             Creates a Notebook.
@@ -45,6 +46,8 @@ class DatabaseAPI:
             :type notebook_filename: str
             :param execution_time: The timestamp of the execution of this notebook
             :type execution_time: int
+            :param debug_info: The debug information, if the batch failed
+            :type debug_info: str or None
             :param user_id: The user id that executed this notebook
             :type user_id: int
             """
@@ -55,6 +58,7 @@ class DatabaseAPI:
             self.status = DatabaseAPI.NotebookStatus.from_int(status)
             self.notebook_filename = notebook_filename
             self.execution_time = execution_time
+            self.debug_info = debug_info
             self.user_id = user_id
 
         def get_filename_without_ext(self):
@@ -180,6 +184,22 @@ class DatabaseAPI:
         )
         self.db.commit()
 
+    def update_notebook_debug_info(self, notebook_id, debug_info):
+        """
+        Updates the debug info in the database
+
+        :param notebook_id: The notebook id to update the debug info for
+        :type notebook_id: str
+        :param debug_info: The debug info to save
+        :type debug_info: str
+        :return:
+        """
+        self.db.execute(
+            'UPDATE notebook SET debug_info = (?) WHERE notebook_id is ?',
+            (debug_info, notebook_id)
+        )
+        self.db.commit()
+
     def get_notebook(self, notebook_id):
         """
         Returns information about the notebook
@@ -191,7 +211,8 @@ class DatabaseAPI:
         :raise DatabaseError: If the given notebook_id is not unique or could not be found
         """
         cur = self.db.execute(
-            'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, user_id '
+            'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, '
+            'debug_info, user_id '
             'FROM notebook WHERE notebook_id is ?',
             (notebook_id,)
         )
@@ -205,7 +226,7 @@ class DatabaseAPI:
         if row is None:
             raise DatabaseError('NotebookID "{}" could not be found'.format(notebook_id))
 
-        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
+        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
 
     def get_notebooks(self, user_id, status=None):
         """
@@ -221,7 +242,7 @@ class DatabaseAPI:
         if status is None:
             cur = self.db.execute(
                 'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, '
-                'user_id '
+                'debug_info, user_id '
                 'FROM notebook '
                 'WHERE user_id is ?',
                 (user_id,)
@@ -229,7 +250,7 @@ class DatabaseAPI:
         else:
             cur = self.db.execute(
                 'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, '
-                'user_id '
+                'debug_info, user_id '
                 'FROM notebook '
                 'WHERE user_id is ? AND status is ?',
                 (user_id, int(status))
@@ -245,7 +266,8 @@ class DatabaseAPI:
                 status=notebook_data[4],
                 notebook_filename=notebook_data[5],
                 execution_time=notebook_data[6],
-                user_id=notebook_data[7]
+                debug_info=notebook_data[7],
+                user_id=notebook_data[8]
             ))
         return notebooks
 

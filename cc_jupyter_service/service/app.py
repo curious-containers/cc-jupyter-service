@@ -239,7 +239,8 @@ def create_app():
                 'notebook_id': notebook.notebook_id,
                 'process_status': str(notebook.status),
                 'notebook_filename': notebook.notebook_filename,
-                'execution_time': notebook.execution_time
+                'execution_time': notebook.execution_time,
+                'debug_info': notebook.debug_info
             })
         return jsonify(entries)
 
@@ -289,6 +290,43 @@ def create_app():
     return app
 
 
+def _get_debug_info_for_batch(batch_id, agency_url, cookie):
+    """
+    Returns the debug information of the given batch.
+    First tries to fetch the stderr of the failed process. If this is not successful, tries to fetch the logs from the
+    agency.
+
+    :type batch_id: str
+    :type agency_url: str
+    :type cookie: DatabaseAPI.Cookie
+    :rtype: str
+    """
+    # try stderr
+    r = requests.get(
+        url_join(agency_url, 'batches/{}/stderr'.format(batch_id)),
+        cookies={AUTHORIZATION_COOKIE_KEY: cookie.cookie_text}
+    )
+
+    if 200 <= r.status_code < 300:
+        return r.text
+
+    # if no stderr could be found, look in agency logs
+    r = requests.get(
+        url_join(agency_url, 'batches/{}'.format(batch_id)),
+        cookies={AUTHORIZATION_COOKIE_KEY: cookie.cookie_text}
+    )
+    r.raise_for_status()
+    batch_info = r.json()
+    for history_entry in batch_info['history']:
+        ccagent_info = history_entry.get('ccagent')
+        if ccagent_info:
+            debug_info = ccagent_info.get('debugInfo')
+            if debug_info:
+                return '\n'.join(debug_info)
+
+    raise ValueError('Could not get debug info for batch')
+
+
 def _update_notebook_status(user):
     """
     Updates the database status for every notebook of the given user. Therefor a request to the agency is made.
@@ -314,15 +352,25 @@ def _update_notebook_status(user):
     batches = r.json()
     notebooks = database_api.get_notebooks(user_id=user.user_id, status=DatabaseAPI.NotebookStatus.PROCESSING)
 
-    experiment_states = {}
+    experiment_states = {}  # maps experiment_id to (batch_state, batch_id)
     for batch in batches:
-        experiment_states[batch['experimentId']] = batch['state']
+        experiment_states[batch['experimentId']] = (batch['state'], batch['_id'])
 
     for notebook in notebooks:
-        experiment_state = experiment_states[notebook.experiment_id]
-        if experiment_state in ('succeeded', 'failed', 'cancelled'):
-            notebook_state = DatabaseAPI.NotebookStatus.from_experiment_state(experiment_state)
+        experiment_state = experiment_states.get(notebook.experiment_id)
+        if experiment_state is None:
+            continue
+        if experiment_state[0] in ('succeeded', 'failed', 'cancelled'):
+            notebook_state = DatabaseAPI.NotebookStatus.from_experiment_state(experiment_state[0])
             database_api.update_notebook_status(notebook.notebook_id, notebook_state)
+
+            # fetch debug info
+            if experiment_state[0] == 'failed':
+                try:
+                    debug_info = _get_debug_info_for_batch(experiment_state[1], agency_url, cookie)
+                except ValueError as e:
+                    debug_info = str(e)
+                database_api.update_notebook_debug_info(notebook.notebook_id, debug_info)
 
 
 def validate_notebook_id(notebook_id):
