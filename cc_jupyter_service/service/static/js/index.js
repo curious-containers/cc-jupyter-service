@@ -552,31 +552,37 @@ $(document).ready(function() {
         cancelButton.prop('disabled', processStatus !== 'processing');
 
         // show debug info button
-        const showDebugInfoButton = $('<button class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#debugInfoModal' + elemIndex + '">Debug</button>');
-        const showDebugInfoModal = $(
-            '<div class="modal fade" id="debugInfoModal' + elemIndex + '" role="dialog">' +
-            '<div class="modal-dialog modal-lg">' +
-            '<div class="modal-content">' +
-            '<div class="modal-header">' +
-            '<h4 class="modal-title">Debug Information</h4>' +
-            '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
-            '</div>' +
-            '<div id="debugInfoModalBody' + elemIndex + '" class="modal-body">' +
-            '</div>' +
-            '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-default btn-outline-secondary" data-dismiss="modal">Close</button>'
-        );
-        const debugInfoModalBody = showDebugInfoModal.find('#debugInfoModalBody' + elemIndex);
-        for (const debugInfoLine of debugInfo.split('\n')) {
-            debugInfoModalBody.append('<p class="pull-left m-1">' + debugInfoLine + '</p>');
+        let showDebugInfoButton = null;
+        let showDebugInfoModal = null;
+        if (debugInfo) {
+            showDebugInfoButton = $('<button class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#debugInfoModal' + elemIndex + '">Debug</button>');
+            showDebugInfoModal = $(
+                '<div class="modal fade" id="debugInfoModal' + elemIndex + '" role="dialog">' +
+                '<div class="modal-dialog modal-lg">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h4 class="modal-title">Debug Information</h4>' +
+                '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
+                '</div>' +
+                '<div id="debugInfoModalBody' + elemIndex + '" class="modal-body">' +
+                '</div>' +
+                '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-default btn-outline-secondary" data-dismiss="modal">Close</button>'
+            );
+            const debugInfoModalBody = showDebugInfoModal.find('#debugInfoModalBody' + elemIndex);
+            for (const debugInfoLine of debugInfo.split('\n')) {
+                debugInfoModalBody.append('<p class="pull-left m-1">' + debugInfoLine + '</p>');
+            }
         }
 
         // td
         const td = $('<td>');
         td.append(cancelButton);
         td.append(downloadButton);
-        td.append(showDebugInfoButton);
-        td.append(showDebugInfoModal);
+        if (showDebugInfoModal) {
+            td.append(showDebugInfoButton);
+            td.append(showDebugInfoModal);
+        }
         row.append(td);
 
         resultTable.append(row);
