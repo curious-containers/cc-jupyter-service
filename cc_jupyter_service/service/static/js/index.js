@@ -64,16 +64,17 @@ $(document).ready(function() {
 
     updatePredefinedDockerImages();
 
-    function setupAlertSection(main) {
-        main.append('<div id="alertSection"></div>');
+    function setupAlertSection(navbar) {
+        navbar.append('<div id="alertSection"></div>');
     }
 
     /**
      * Setup the click events for the navigation bar
      */
     function setupNavbar(main, mode) {
-        main.append(
-            '<nav class="navbar navbar-expand-sm bg-dark navbar-dark sticky-top">' +
+        const navbar = $(
+            '<div class="sticky-top">' +
+            '<nav class="navbar navbar-expand-sm bg-dark navbar-dark">' +
             '<ul class="navbar-nav">' +
             '<li class="nav-item"><a id="ExecutionNavbar" class="nav-link">Execution</a></li>' +
             '<li class="nav-item"><a id="ResultNavbar" class="nav-link">Results</a></li>' +
@@ -81,18 +82,22 @@ $(document).ready(function() {
             '<ul class="navbar-nav ml-auto">' +
             '<li class="nav-item"><a id="LogoutNavbar" class="nav-link">Logout</a></li>' +
             '</ul>' +
-            '</nav>'
+            '</nav>' +
+            '</div>'
         );
         if (mode === 'execution') {
-            main.find('#ExecutionNavbar').addClass('active');
+            navbar.find('#ExecutionNavbar').addClass('active');
         } else {
-            main.find('#ResultNavbar').addClass('active');
+            navbar.find('#ResultNavbar').addClass('active');
         }
         $('#ExecutionNavbar').click(showExecutionView);
         $('#ResultNavbar').click(showResultView);
         $('#LogoutNavbar').click(function() {
             window.location = getUrl('auth/logout');
         });
+
+        setupAlertSection(navbar);
+        main.append(navbar);
     }
 
     /**
@@ -379,7 +384,6 @@ $(document).ready(function() {
         const main = $('#main');
 
         clearView(main);
-        setupAlertSection(main);
         setupNavbar(main, 'execution');
 
         // drop zone
