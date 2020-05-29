@@ -90,9 +90,9 @@ $(document).ready(function() {
         } else {
             navbar.find('#ResultNavbar').addClass('active');
         }
-        $('#ExecutionNavbar').click(showExecutionView);
-        $('#ResultNavbar').click(showResultView);
-        $('#LogoutNavbar').click(function() {
+        navbar.find('#ExecutionNavbar').click(showExecutionView);
+        navbar.find('#ResultNavbar').click(showResultView);
+        navbar.find('#LogoutNavbar').click(function() {
             window.location = getUrl('auth/logout');
         });
 
