@@ -144,7 +144,7 @@ $(document).ready(function() {
             predefinedImages.prop('disabled', false);
             customImages.prop('disabled', true);
         })
-        predefinedImages.change(function() {
+        predefinedImages.on('input', function() {
             dependenciesSelection.predefinedImage = predefinedImages.val();
         })
         customImagesRadio.click(function() {
@@ -152,8 +152,9 @@ $(document).ready(function() {
             predefinedImages.prop('disabled', true);
             customImages.prop('disabled', false);
         })
-        customImages.keyup(function() {
+        customImages.on('input', function() {
             dependenciesSelection.customImage = customImages.val();
+            console.log(customImages.val());
         })
     }
 
@@ -163,7 +164,7 @@ $(document).ready(function() {
         for (const gpuRequirement of gpuRequirements) {
             const tmpIndex = index;
             const gpuVram = $('<input id="gpuVram' + tmpIndex + '" type="number" value="' + gpuRequirement + '" step="1024">');
-            gpuVram.change(function() {
+            gpuVram.on('input', function() {
                 gpuRequirements[tmpIndex] = parseInt(gpuVram.val().toString());
             })
             const li = $('<li class="list-group-item"><label for="gpuVram' + tmpIndex + '" class="label">VRAM in MB</label></li>');
@@ -199,7 +200,7 @@ $(document).ready(function() {
             externalDataSubSection.empty();
             externalDataSubSection.append('<label for="externalDataInputName' + elemIndex + '">Input Name: </label>');
             const inputNameInput = $('<input type="text" id="externalDataInputName' + elemIndex + '" class="form-control no-break">');
-            inputNameInput.keyup(function() {
+            inputNameInput.on('input', function() {
                 externalDataEntry.inputName = inputNameInput.val();
             })
             inputNameInput.val(externalDataEntry.inputName);
@@ -214,7 +215,7 @@ $(document).ready(function() {
                 typeSelect.append(option);
             }
 
-            typeSelect.change(function () {
+            typeSelect.on('input', function () {
                 let val = typeSelect.val();
                 if (val === 'null') {
                     val = null;
@@ -241,7 +242,7 @@ $(document).ready(function() {
                     option.prop('selected', externalDataEntry.connectorType === opt);
                     connectorTypeSelect.append(option);
                 }
-                connectorTypeSelect.change(function() {
+                connectorTypeSelect.on('input', function() {
                     let val = connectorTypeSelect.val();
                     if (val === 'null') {
                         val = null;
@@ -255,7 +256,7 @@ $(document).ready(function() {
                     externalDataSubSection.append('<br>');
                     externalDataSubSection.append('<label for="externalDataHost' + elemIndex + '">Host: </label>');
                     const hostInput = $('<input type="text" id="externalDataHost' + elemIndex + '" class="form-control no-break">');
-                    hostInput.keyup(function() {
+                    hostInput.on('input', function() {
                         externalDataEntry.host = hostInput.val();
                     })
                     hostInput.val(externalDataEntry.host);
@@ -264,7 +265,7 @@ $(document).ready(function() {
                     externalDataSubSection.append('<br>');
                     externalDataSubSection.append('<label for="externalDataFilePath' + elemIndex + '">Filepath: </label>');
                     const filePathInput = $('<input type="text" id="externalDataFilePath' + elemIndex + '" class="form-control no-break">');
-                    filePathInput.keyup(function() {
+                    filePathInput.on('input', function() {
                         externalDataEntry.path = filePathInput.val();
                     })
                     filePathInput.val(externalDataEntry.path);
@@ -273,7 +274,7 @@ $(document).ready(function() {
                     externalDataSubSection.append('<br>');
                     externalDataSubSection.append('<label for="externalDataUsername' + elemIndex + '">Username: </label>');
                     const usernameInput = $('<input type="text" id="externalDataUsername' + elemIndex + '" class="form-control no-break">');
-                    usernameInput.keyup(function() {
+                    usernameInput.on('input', function() {
                         externalDataEntry.username = usernameInput.val();
                     })
                     usernameInput.val(externalDataEntry.username);
@@ -282,7 +283,7 @@ $(document).ready(function() {
                     externalDataSubSection.append('<br>');
                     externalDataSubSection.append('<label for="externalDataPassword' + elemIndex + '">Password: </label>');
                     const passwordInput = $('<input type="password" id="externalDataPassword' + elemIndex + '" class="form-control no-break">');
-                    passwordInput.keyup(function() {
+                    passwordInput.on('input', function() {
                         externalDataEntry.password = passwordInput.val();
                     })
                     passwordInput.val(externalDataEntry.password);
@@ -297,7 +298,7 @@ $(document).ready(function() {
                     option.prop('selected', externalDataEntry.connectorType === opt);
                     connectorTypeSelect.append(option);
                 }
-                connectorTypeSelect.change(function() {
+                connectorTypeSelect.on('input', function() {
                     let val = connectorTypeSelect.val();
                     if (val === 'null') {
                         val = null;
@@ -311,7 +312,7 @@ $(document).ready(function() {
                     externalDataSubSection.append('<br>');
                     externalDataSubSection.append('<label for="externalDataHost' + elemIndex + '">Host: </label>');
                     const hostInput = $('<input type="text" id="externalDataHost' + elemIndex + '" class="form-control no-break">');
-                    hostInput.keyup(function() {
+                    hostInput.on('input', function() {
                         externalDataEntry.host = hostInput.val();
                     });
                     hostInput.val(externalDataEntry.host);
@@ -320,7 +321,7 @@ $(document).ready(function() {
                     externalDataSubSection.append('<br>');
                     externalDataSubSection.append('<label for="externalDataDirPath' + elemIndex + '">Directory path: </label>');
                     const dirPathInput = $('<input type="text" id="externalDataDirPath' + elemIndex + '" class="form-control no-break">');
-                    dirPathInput.keyup(function() {
+                    dirPathInput.on('input', function() {
                         externalDataEntry.path = dirPathInput.val();
                     });
                     dirPathInput.val(externalDataEntry.path);
@@ -329,7 +330,7 @@ $(document).ready(function() {
                     externalDataSubSection.append('<br>');
                     externalDataSubSection.append('<label for="externalDataUsername' + elemIndex + '">Username: </label>');
                     const usernameInput = $('<input type="text" id="externalDataUsername' + elemIndex + '" class="form-control no-break">');
-                    usernameInput.keyup(function() {
+                    usernameInput.on('input', function() {
                         externalDataEntry.username = usernameInput.val();
                     });
                     usernameInput.val(externalDataEntry.username);
@@ -338,7 +339,7 @@ $(document).ready(function() {
                     externalDataSubSection.append('<br>');
                     externalDataSubSection.append('<label for="externalDataPassword' + elemIndex + '">Password: </label>');
                     const passwordInput = $('<input type="password" id="externalDataPassword' + elemIndex + '" class="form-control no-break">');
-                    passwordInput.keyup(function() {
+                    passwordInput.on('input', function() {
                         externalDataEntry.password = passwordInput.val();
                     });
                     passwordInput.val(externalDataEntry.password);
@@ -348,7 +349,7 @@ $(document).ready(function() {
                     const mountLabel = $('<label for="externalDataMount' + elemIndex + '"></label>');
                     externalDataSubSection.append(mountLabel);
                     const mountInput = $('<input type="checkbox" id="externalDataMount' + elemIndex + '" value="">');
-                    mountInput.change(function() {
+                    mountInput.on('input', function() {
                         externalDataEntry.mount = mountInput.prop('checked');
                     });
                     mountInput.prop('checked', externalDataEntry.mount);
