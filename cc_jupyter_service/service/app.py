@@ -242,6 +242,7 @@ def create_app():
                 'execution_time': notebook.execution_time,
                 'debug_info': notebook.debug_info
             })
+        entries = sorted(entries, key=lambda entry: entry['execution_time'], reverse=True)
         return jsonify(entries)
 
     @app.route('/predefined_docker_images', methods=['GET'])
