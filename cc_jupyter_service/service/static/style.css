@@ -4,6 +4,10 @@
     color: black;
 }
 
+.modal-body {
+    text-align: left;
+}
+
 /*
 #addGpu:hover {
     color: blue;

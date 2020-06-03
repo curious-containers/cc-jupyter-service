@@ -564,15 +564,10 @@ $(document).ready(function() {
                 '<h4 class="modal-title">Debug Information</h4>' +
                 '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
                 '</div>' +
-                '<div id="debugInfoModalBody' + elemIndex + '" class="modal-body">' +
-                '</div>' +
+                '<pre id="debugInfoModalBody' + elemIndex + '" class="modal-body pull">' + debugInfo + '</pre>' +
                 '<div class="modal-footer">' +
                 '<button type="button" class="btn btn-default btn-outline-secondary" data-dismiss="modal">Close</button>'
             );
-            const debugInfoModalBody = showDebugInfoModal.find('#debugInfoModalBody' + elemIndex);
-            for (const debugInfoLine of debugInfo.split('\n')) {
-                debugInfoModalBody.append('<p class="pull-left m-1">' + debugInfoLine + '</p>');
-            }
         }
 
         // td
