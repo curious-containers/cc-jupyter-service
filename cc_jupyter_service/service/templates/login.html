@@ -4,18 +4,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-<form method='Post'>
-    <label for="agencyUrl">Agency URL</label>
-    <input name="agencyUrl" id="agencyUrl" required>
-    <label for="agencyUsername">Username</label>
-    <input name="agencyUsername" id="agencyUsername">
-    <label for="agencyPassword">Password</label>
-    <input type="password" name="agencyPassword" id="agencyPassword">
-    <input type="submit" value="Login">
-</form>
+<div class="container">
+    <h2>Login</h2>
+    <form method='Post'>
+        <div class="col-xs-5">
+            <label for="agencyUrl">Agency URL</label>
+            <input class="form-control" placeholder="Agency-URL" name="agencyUrl" id="agencyUrl" required>
+        </div>
+        <div class="form-group">
+            <label for="agencyUsername">Agency-Username</label>
+            <input class="form-control" placeholder="Agency-Username" name="agencyUsername" id="agencyUsername" required>
+        </div>
+        <div>
+            <label for="agencyPassword">Agency-Password</label>
+            <input class="form-control" placeholder="Agency-Password" type="password" name="agencyPassword" id="agencyPassword" required>
+        </div>
+        <br>
+        <input type="submit" class="btn btn-primary" value="Login">
+    </form>
+</div>
 
 </body>
 </html>

@@ -27,6 +27,11 @@ h3 {
     margin-top: 15px;
 }
 
+h2 {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
 #customDockerImage {
     display: inline;
 }
