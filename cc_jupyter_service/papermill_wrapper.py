@@ -17,12 +17,18 @@ def main():
     if len(notebooks) != 2:
         raise ValueError('Got {} notebook parameters (expected 2): {}'.format(len(notebooks), notebooks))
 
-    papermill.execute_notebook(
-        notebooks[0],
-        notebooks[1],
-        parameters=parameters
-    )
+    try:
+        papermill.execute_notebook(
+            notebooks[0],
+            notebooks[1],
+            parameters=parameters,
+            progress_bar=False
+        )
+    except papermill.PapermillExecutionError as e:
+        print(e)
+        return 1
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
