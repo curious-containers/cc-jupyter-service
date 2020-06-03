@@ -307,7 +307,7 @@ def _get_debug_info_for_batch(batch_id, agency_url, cookie):
         cookies={AUTHORIZATION_COOKIE_KEY: cookie.cookie_text}
     )
 
-    if 200 <= r.status_code < 300:
+    if 200 <= r.status_code < 300 and r.text.strip():
         return r.text
 
     # if no stderr could be found, look in agency logs

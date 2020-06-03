@@ -25,7 +25,7 @@ def main():
             progress_bar=False
         )
     except papermill.PapermillExecutionError as e:
-        print(e)
+        print(e, file=sys.stderr)
         return 1
     return 0
 
