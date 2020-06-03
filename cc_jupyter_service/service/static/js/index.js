@@ -525,14 +525,18 @@ $(document).ready(function() {
         const row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td>' + formatTimestamp(executionTime) + '</td></tr>');
 
         // download button
-        const downloadButton = $('<button class="btn btn-sm btn-outline-secondary"><i class="fa fa-download"></i></button>');
+        const downloadButton = $('<button class="btn btn-sm btn-outline-secondary" data-toggle="tooltip" title="download"><i class="fa fa-download"></i></button>');
+        // noinspection JSUnresolvedFunction
+        downloadButton.tooltip();
         downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
         })
         downloadButton.prop('disabled', processStatus !== 'success');
 
         // cancel button
-        const cancelButton = $('<button class="btn btn-sm btn-outline-secondary"><i class="fa fa-times-circle"></i></button>');
+        const cancelButton = $('<button class="btn btn-sm btn-outline-secondary" data-toggle="tooltip" title="Cancel"><i class="fa fa-times-circle"></i></button>');
+        // noinspection JSUnresolvedFunction
+        cancelButton.tooltip();
         cancelButton.click(function() {
             const url = getUrl('cancel_notebook')
             // noinspection JSIgnoredPromiseFromCall
