@@ -335,39 +335,37 @@ def _update_notebook_status(user):
     :type user: DatabaseAPI.User
 
     :raise ValueError: If no authorization cookie could be found
+    :raise HTTPError: If the agency could not be contacted
     """
     database_api = DatabaseAPI.create()
     cookie = database_api.get_newest_cookie(user.user_id)
     if cookie is None:
         raise ValueError('No authorization cookie could be found')
+
     agency_url = normalize_url(user.agency_url)
 
-    r = requests.get(
-        url_join(agency_url, 'batches'),
-        cookies={AUTHORIZATION_COOKIE_KEY: cookie.cookie_text},
-        params={'limit': UPDATE_NOTEBOOK_BATCH_LIMIT, 'username': user.agency_username}
-    )
-    r.raise_for_status()
-
-    batches = r.json()
     notebooks = database_api.get_notebooks(user_id=user.user_id, status=DatabaseAPI.NotebookStatus.PROCESSING)
 
-    experiment_states = {}  # maps experiment_id to (batch_state, batch_id)
-    for batch in batches:
-        experiment_states[batch['experimentId']] = (batch['state'], batch['_id'])
-
     for notebook in notebooks:
-        experiment_state = experiment_states.get(notebook.experiment_id)
-        if experiment_state is None:
-            continue
-        if experiment_state[0] in ('succeeded', 'failed', 'cancelled'):
-            notebook_state = DatabaseAPI.NotebookStatus.from_experiment_state(experiment_state[0])
+        r = requests.get(
+            url_join(agency_url, 'batches'),
+            cookies={AUTHORIZATION_COOKIE_KEY: cookie.cookie_text},
+            params={'experimentId': notebook.experiment_id}
+        )
+        r.raise_for_status()
+        batch = r.json()
+        if len(batch) != 1:
+            raise ValueError('Expected one batch got {} batches'.format(len(batch)))
+        batch = batch[0]
+        batch_state = batch['state']
+        if batch_state in ('succeeded', 'failed', 'cancelled'):
+            notebook_state = DatabaseAPI.NotebookStatus.from_experiment_state(batch_state)
             database_api.update_notebook_status(notebook.notebook_id, notebook_state)
 
             # fetch debug info
-            if experiment_state[0] == 'failed':
+            if batch_state == 'failed':
                 try:
-                    debug_info = _get_debug_info_for_batch(experiment_state[1], agency_url, cookie)
+                    debug_info = _get_debug_info_for_batch(batch['_id'], agency_url, cookie)
                 except ValueError as e:
                     debug_info = str(e)
                 database_api.update_notebook_debug_info(notebook.notebook_id, debug_info)
