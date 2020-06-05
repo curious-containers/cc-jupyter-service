@@ -16,6 +16,11 @@ configuration_schema = {
                 'additionalProperties': False,
                 'required': ['name', 'description', 'tag']
             }
+        },
+        'predefinedAgencyUrls': {
+            'type': 'array',
+            'items': {'type': 'string'},
+            'minItems': 1
         }
     },
     'additionalProperties': False,

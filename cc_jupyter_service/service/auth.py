@@ -2,15 +2,18 @@ import functools
 
 from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
 
+from cc_jupyter_service.common.conf import Conf
 from cc_jupyter_service.common.helper import normalize_url, check_agency, AgencyError
 from cc_jupyter_service.service.db import DatabaseAPI
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+conf = Conf.from_system()
 
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        print('form: ', request.form)
         agency_url = normalize_url(request.form['agencyUrl'])
         agency_username = request.form['agencyUsername']
         agency_password = request.form['agencyPassword']
@@ -41,7 +44,7 @@ def login():
             return redirect(url_for('root'))
 
         flash(error)
-    return render_template('login.html')
+    return render_template('login.html', predefinedAgencyUrls=conf.predefined_agency_urls)
 
 
 @bp.route('/logout')

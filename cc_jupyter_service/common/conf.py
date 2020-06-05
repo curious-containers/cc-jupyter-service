@@ -32,7 +32,9 @@ class ImageInfo:
 
 
 class Conf:
-    def __init__(self, notebook_directory, flask_secret_key, prevent_localhost, predefined_docker_images):
+    def __init__(
+        self, notebook_directory, flask_secret_key, prevent_localhost, predefined_docker_images, predefined_agency_urls
+    ):
         """
         Creates a new Conf object.
 
@@ -45,11 +47,14 @@ class Conf:
         :param predefined_docker_images: A list of predefined docker images. The user can choose docker images out of
                                          this list in the frontend.
         :type predefined_docker_images: list[ImageInfo]
+        :param predefined_agency_urls: A list of strings defining agency urls which are displayed at the login page
+        :rtype predefined_agency_urls: list[str] or None
         """
         self.notebook_directory = notebook_directory
         self.flask_secret_key = flask_secret_key
         self.prevent_localhost = prevent_localhost
         self.predefined_docker_images = predefined_docker_images
+        self.predefined_agency_urls = predefined_agency_urls
 
     @staticmethod
     def from_system():
@@ -112,7 +117,8 @@ class Conf:
             notebook_directory=data['notebookDirectory'],
             flask_secret_key=data['flaskSecretKey'],
             prevent_localhost=data.get('preventLocalhost', True),
-            predefined_docker_images=predefined_docker_images
+            predefined_docker_images=predefined_docker_images,
+            predefined_agency_urls=data.get('predefinedAgencyUrls')
         )
 
 

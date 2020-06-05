@@ -13,10 +13,21 @@
 <div class="container">
     <h2>Login</h2>
     <form method='Post'>
-        <div class="col-xs-5">
-            <label for="agencyUrl">Agency URL</label>
-            <input class="form-control" placeholder="Agency-URL" name="agencyUrl" id="agencyUrl" required>
-        </div>
+        {% if predefinedAgencyUrls %}
+            <div class="col-xs-5">
+                <label for="agencyUrl">Agency URL</label>
+                <select class="form-control" name="agencyUrl" id="agencyUrl">{{ predefinedAgencyUrl }}
+                    {% for predefinedAgencyUrl in predefinedAgencyUrls %}
+                        <option>{{ predefinedAgencyUrl }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {%  else %}
+            <div class="col-xs-5">
+                <label for="agencyUrl">Agency URL</label>
+                <input class="form-control" placeholder="Agency-URL" name="agencyUrl" id="agencyUrl" required>
+            </div>
+        {% endif %}
         <div class="form-group">
             <label for="agencyUsername">Agency-Username</label>
             <input class="form-control" placeholder="Agency-Username" name="agencyUsername" id="agencyUsername" required>
