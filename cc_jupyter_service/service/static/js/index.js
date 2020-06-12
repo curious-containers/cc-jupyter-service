@@ -159,7 +159,6 @@ $(document).ready(function() {
         })
         customImages.on('input', function() {
             dependenciesSelection.customImage = customImages.val();
-            console.log(customImages.val());
         })
     }
 

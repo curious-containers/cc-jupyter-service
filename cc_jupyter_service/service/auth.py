@@ -13,7 +13,6 @@ conf = Conf.from_system()
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        print('form: ', request.form)
         agency_url = normalize_url(request.form['agencyUrl'])
         agency_username = request.form['agencyUsername']
         agency_password = request.form['agencyPassword']
@@ -49,7 +48,6 @@ def login():
 
 @bp.route('/logout')
 def logout():
-    print('session cleared')
     session.clear()
     return redirect(url_for('root'))
 
