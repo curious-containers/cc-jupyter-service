@@ -63,7 +63,7 @@ RED_FILE_TEMPLATE = {
             "image": {
                 "url": None  # replaced with the image selected by the user
             },
-            "ram": 4096
+            "ram": 4096*8  # 32 GB
         }
     },
     "execution": {
