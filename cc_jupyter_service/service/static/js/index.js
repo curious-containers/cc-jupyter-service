@@ -486,12 +486,11 @@ $(document).ready(function() {
             }).fail(function (e, statusText, errorMessage) {
                 addAlert('danger', 'Failed to execute the given notebook!');
                 console.error(errorMessage, e.responseText);
+                submitButton.prop('disabled', false)
             }).done(function(data, _statusText, _jqXHR) {
                 showResultView();
             })
-
-            jupyterNotebookEntries = [];
-            refreshNotebookList($('#notebookList'))
+            submitButton.prop('disabled', true)
         });
 
         const submain = $('<div id="submain" class="container-fluid-sm">');
