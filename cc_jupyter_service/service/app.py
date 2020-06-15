@@ -1,4 +1,5 @@
 import os
+import sys
 
 import requests
 from flask import Flask, render_template, request, jsonify, g, Response
@@ -231,7 +232,12 @@ def create_app():
         """
         database_api = DatabaseAPI.create()
 
-        _update_notebook_status(g.user)
+        try:
+            _update_notebook_status(g.user)
+        except HTTPError as e:
+            err_str = 'Failed to update notebook status: {}'.format(str(e))
+            print(err_str, file=sys.stderr)
+            raise BadRequest(err_str)
 
         entries = []
         for notebook in database_api.get_notebooks(g.user.user_id):

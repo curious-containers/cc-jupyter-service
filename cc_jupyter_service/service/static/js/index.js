@@ -41,6 +41,9 @@ $(document).ready(function() {
     let globalPredefinedImages = [];
     let gpuRequirements = [];
     let externalDataInfo = [];
+    let refreshResultsInterval = null;
+    let resultStates = [];
+    const REFRESH_RESULTS_INTERVAL = 4000;
 
     /**
      * Fetches the predefined docker images from the server
@@ -500,6 +503,21 @@ $(document).ready(function() {
         submain.append('<br>');
         submain.append(submitButton);
         main.append(submain);
+
+        clearRefreshResultsInterval();
+    }
+
+    function clearRefreshResultsInterval() {
+        if (refreshResultsInterval != null) {
+            window.clearInterval(refreshResultsInterval);
+            refreshResultsInterval = null;
+        }
+    }
+
+    function startRefreshResultsInterval() {
+        if (refreshResultsInterval == null) {
+            refreshResultsInterval = window.setInterval(function() { refreshResults(false); }, REFRESH_RESULTS_INTERVAL)
+        }
     }
 
     function padZero(i) {
@@ -611,13 +629,39 @@ $(document).ready(function() {
         resultTable.append('<tr><th>Name</th><th>Status</th><th>Time</th><th>Actions</th></tr>')
     }
 
+    function updateResultStates(data) {
+        let containsProcessing = false;
+        const tempResultStates = [];
+        for (const entry of data) {
+            tempResultStates.push(entry['process_status'])
+            if (entry['process_status'] === 'processing') {
+                containsProcessing = true;
+            }
+        }
+
+        if (containsProcessing) {
+            startRefreshResultsInterval();
+        } else {
+            clearRefreshResultsInterval();
+        }
+
+        const resultStatesEqual = tempResultStates.length === resultStates.length && tempResultStates.every(function(value, index) { return value === resultStates[index]});
+        if (!resultStatesEqual) {
+            resultStates = tempResultStates;
+        }
+        return !resultStatesEqual;
+    }
+
     /**
      * Updates the result table entries by fetching the results
      */
-    function refreshResults() {
+    function refreshResults(verbose=true) {
         const resultTable = $('#resultTable');
-        clearResultTable(resultTable);
-        $('#resultSection').append('<div id="resultSpinner" class="spinner-border text-muted"></div>');
+
+        if (verbose) {
+            clearResultTable(resultTable);
+            $('#resultSection').append('<div id="resultSpinner" class="spinner-border text-muted"></div>');
+        }
         let url = getUrl('list_results')
         // noinspection JSIgnoredPromiseFromCall
         $.ajax({
@@ -625,6 +669,11 @@ $(document).ready(function() {
             method: 'GET',
             dataType: 'json',
         }).done(function (data, _statusText, _jqXHR) {
+            const newResults = updateResultStates(data);
+            // we do nothing, if not verbose and no new results are fetched
+            if (!verbose && !newResults) {
+                return;
+            }
             const resultTable = $('#resultTable')
             clearResultTable(resultTable);
             let index = 0;
@@ -639,6 +688,7 @@ $(document).ready(function() {
             console.error('Failed to refresh job list: ', e);
             addAlert('danger', 'Failed to refresh the job list!');
             $('#resultSpinner').remove();
+            clearRefreshResultsInterval();
         });
     }
 
