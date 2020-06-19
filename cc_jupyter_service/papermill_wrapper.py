@@ -44,9 +44,13 @@ def download_requirements(requirements_file):
     if pip_command is None:
         raise EnvironmentError('Cannot find pip executable. Neither "pip3" nor "pip" is available')
 
-    result = subprocess.run([pip_command, 'install', '-r', requirements_file], capture_output=True)
+    result = subprocess.run(
+        [pip_command, 'install', '-r', requirements_file],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
     if result.returncode != 0:
-        raise EnvironmentError('Failed to install python requirements.\n{}'.format(result.stderr))
+        raise EnvironmentError('Failed to install python requirements.\n{}'.format(str(result.stderr)))
 
 
 if __name__ == '__main__':
