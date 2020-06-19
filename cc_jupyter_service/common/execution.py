@@ -65,10 +65,14 @@ def exec_notebook(
         gpu_requirements, external_data, python_requirements
     )
 
+    py_reqs = None
+    if python_requirements is not None:
+        py_reqs = python_requirements['data']
+
     database_api = DatabaseAPI.create()
     database_api.create_notebook(
         notebook_id, notebook_token, g.user.user_id, experiment_id, notebook_filename, int(time.time()),
-        python_requirements=python_requirements
+        python_requirements=py_reqs
     )
 
     return experiment_id
