@@ -182,7 +182,7 @@ def _create_red_data(
     if python_requirements is None:
         del red_data['inputs']['python_requirements']
     else:
-        python_requirements_access = red_data['inputs']['python_requirements']['connector']['access']
+        python_requirements_access = red_data['inputs']['pythonRequirements']['connector']['access']
         python_requirements_access['url'] = url_join(url_root, 'python_requirements/' + notebook_id)
         python_requirements_access['auth']['username'] = agency_username
         python_requirements_access['auth']['password'] = notebook_token
