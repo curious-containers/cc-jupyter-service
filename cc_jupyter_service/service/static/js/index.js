@@ -408,6 +408,22 @@ $(document).ready(function() {
         const dropZone = $('<div id="dropZone" style="width: 100px; height: 100px; background-color: lightgray"></div>');
         dropZoneSection.append(dropZone);
 
+        const notebookLoadLabel = $('<label for="notebookLoadButton">or upload here: </label>');
+        const notebookLoadButton = $('<input type="file" id="notebookLoadButton" name="notebookLoadButton">');
+
+        notebookLoadButton.on('change', function(target) {
+            if (this.files.length !== 1) {
+                console.error('Could not get notebook file. Num files: ', this.files.length);
+                addAlert('danger', 'Failed to load notebook file');
+            } else {
+                loadNotebookFile(this.files[0]);
+            }
+        });
+
+        dropZoneSection.append(notebookLoadLabel);
+        dropZoneSection.append(notebookLoadButton);
+        dropZoneSection.append('<br>');
+
         const notebookList = $('<ul id="notebookList" class="list-group"> </ul>');
         refreshNotebookList(notebookList);
         dropZoneSection.append(notebookList);
@@ -786,26 +802,30 @@ $(document).ready(function() {
     function ondropNotebookHandler(event) {
         event.stopPropagation();
         event.preventDefault();
-        const notebookList = $('#notebookList');
 
         for (const file of event.originalEvent.dataTransfer.files) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                let json = null;
-                try {
-                    // noinspection JSIgnoredPromiseFromCall
-                    const res = ev.target.result.toString();
-                    json = JSON.parse(res);
-                } catch (error) {
-                    addAlert('danger', 'Failed to decode the notebook!');
-                    console.error('Error while decoding notebook.' + error + '\ncontent was: ' + ev.target.result);
-                    return;
-                }
-                jupyterNotebookEntries.push(new NotebookEntry(json, file.name));
-                refreshNotebookList(notebookList);
-            };
-            reader.readAsText(file);
+            loadNotebookFile(file);
         }
+    }
+
+    function loadNotebookFile(file) {
+        const notebookList = $('#notebookList');
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            let json = null;
+            try {
+                // noinspection JSIgnoredPromiseFromCall
+                const res = ev.target.result.toString();
+                json = JSON.parse(res);
+            } catch (error) {
+                addAlert('danger', 'Failed to decode the notebook!');
+                console.error('Error while decoding notebook.' + error + '\ncontent was: ' + ev.target.result);
+                return;
+            }
+            jupyterNotebookEntries.push(new NotebookEntry(json, file.name));
+            refreshNotebookList(notebookList);
+        };
+        reader.readAsText(file);
     }
 
     showExecutionView();
