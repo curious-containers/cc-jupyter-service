@@ -184,7 +184,7 @@ def _create_red_data(
 
     # python requirements
     if python_requirements is None:
-        del red_data['inputs']['python_requirements']
+        del red_data['inputs']['pythonRequirements']
     else:
         python_requirements_access = red_data['inputs']['pythonRequirements']['connector']['access']
         python_requirements_access['url'] = url_join(url_root, 'python_requirements/' + notebook_id)
