@@ -174,6 +174,8 @@ def _create_red_data(
             elif external_datum['inputType'] == 'Directory':
                 red_data['inputs'][input_name]['connector']['access']['dirPath'] = external_datum['path']
                 red_data['inputs'][input_name]['connector']['mount'] = external_datum['mount']
+                if external_datum['mount']:
+                    red_data['inputs'][input_name]['connector']['access']['writable'] = True
             else:
                 raise ValueError('Unknown inputType "{}" for "{}"'.format(external_datum['inputType'], input_name))
         else:
