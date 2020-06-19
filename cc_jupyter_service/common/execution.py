@@ -16,7 +16,7 @@ DEFAULT_DOCKER_IMAGE = 'bruno1996/cc_jupyterservice_base_image'
 
 def exec_notebook(
         notebook_data, agency_url, agency_username, agency_authorization_cookie, notebook_database, url_root,
-        docker_image, gpu_requirements, notebook_filename, external_data
+        docker_image, gpu_requirements, notebook_filename, external_data, python_requirements
 ):
     """
     - Validates the agency authentication information
@@ -45,6 +45,10 @@ def exec_notebook(
     :param external_data: A list of dictionaries containing information about external data.
                           Should at least contain the keys ['inputName', 'inputType', 'connectorType']
     :type external_data: dict
+    :param python_requirements: A dictionary containing a the keys 'data' and 'filename'. The value of 'data' is the
+                                content of a requirements specification file for pip and filename is the filename of
+                                this file.
+    :type python_requirements: dict or None
 
     :return: The experiment id of the executed experiment
     :rtype: str
@@ -58,12 +62,13 @@ def exec_notebook(
 
     experiment_id = start_agency(
         notebook_id, notebook_token, agency_url, agency_username, agency_authorization_cookie, url_root, docker_image,
-        gpu_requirements, external_data
+        gpu_requirements, external_data, python_requirements
     )
 
     database_api = DatabaseAPI.create()
     database_api.create_notebook(
-        notebook_id, notebook_token, g.user.user_id, experiment_id, notebook_filename, int(time.time())
+        notebook_id, notebook_token, g.user.user_id, experiment_id, notebook_filename, int(time.time()),
+        python_requirements=python_requirements
     )
 
     return experiment_id
@@ -71,7 +76,7 @@ def exec_notebook(
 
 def _create_red_data(
         notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image, gpu_requirements,
-        external_data
+        external_data, python_requirements
 ):
     """
     Creates the red data that can be used for execution on an agency.
@@ -93,6 +98,10 @@ def _create_red_data(
     :param external_data: A list of dictionaries containing information about external data.
                           Should at least contain the keys ['inputName', 'inputType', 'connectorType']
     :type external_data: dict
+    :param python_requirements: A dictionary containing a the keys 'data' and 'filename'. The value of 'data' is the
+                                content of a requirements specification file for pip and filename is the filename of
+                                this file.
+    :type python_requirements: dict
 
     :return: The red data filled with the given information to execute on an agency
 
@@ -169,12 +178,21 @@ def _create_red_data(
                 .format(external_datum['connectorType'])
             )
 
+    # python requirements
+    if python_requirements is None:
+        del red_data['inputs']['python_requirements']
+    else:
+        python_requirements_access = red_data['inputs']['python_requirements']['connector']['access']
+        python_requirements_access['url'] = url_join(url_root, 'python_requirements/' + notebook_id)
+        python_requirements_access['auth']['username'] = agency_username
+        python_requirements_access['auth']['password'] = notebook_token
+
     return red_data
 
 
 def start_agency(
         notebook_id, notebook_token, agency_url, agency_username, authorization_cookie, url_root, docker_image,
-        gpu_requirements, external_data
+        gpu_requirements, external_data, python_requirements
 ):
     """
     Executes the given notebook on the given agency.
@@ -198,6 +216,10 @@ def start_agency(
     :param external_data: A list of dictionaries containing information about external data.
                           Should at least contain the keys ['inputName', 'inputType', 'connectorType']
     :type external_data: dict
+    :param python_requirements: A dictionary containing a the keys 'data' and 'filename'. The value of 'data' is the
+                                content of a requirements specification file for pip and filename is the filename of
+                                this file.
+    :type python_requirements: dict
 
     :return: The experiment id of the started experiment
     :rtype: str
@@ -206,7 +228,7 @@ def start_agency(
     """
     red_data = _create_red_data(
         notebook_id, notebook_token, agency_url, agency_username, url_root, docker_image, gpu_requirements,
-        external_data
+        external_data, python_requirements
     )
 
     r = requests.post(

@@ -153,7 +153,8 @@ def create_app():
                     docker_image=docker_image,
                     gpu_requirements=gpu_requirements,
                     notebook_filename=jupyter_notebook['filename'],
-                    external_data=external_data
+                    external_data=external_data,
+                    python_requirements=request_data['pythonRequirements']
                 )
             except HTTPError as e:
                 raise BadRequest('Could not execute {}. {}'.format(jupyter_notebook['filename'], str(e)))
@@ -220,6 +221,26 @@ def create_app():
             return response
         else:
             raise NotFound()
+
+    @app.route('/python_requirements/<notebook_id>', methods=['GET'])
+    def get_python_requirements(notebook_id):
+        """
+        Returns the python requirements for the requested notebook
+
+        :param notebook_id: The id of the notebook
+        :type notebook_id: str
+
+        :raise NotFound: If the notebook id could not be found, or if there aren't python requirements for this notebook
+        """
+        validate_notebook_id(notebook_id)
+
+        database_api = DatabaseAPI.create()
+        notebook = database_api.get_notebook(notebook_id)
+
+        if notebook.python_requirements is None:
+            raise NotFound('Notebook has no python requirements')
+
+        return notebook.python_requirements
 
     @app.route('/list_results')
     @auth.login_required

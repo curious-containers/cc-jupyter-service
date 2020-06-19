@@ -21,6 +21,18 @@ request_schema = {
             'additionalProperties': False,
             'required': ['custom', 'predefinedImage', 'customImage']
         },
+        'pythonRequirements': {
+            'oneOf': [
+                {'type': 'null'},
+                {
+                    'type': 'object',
+                    'properties': {
+                        'data': {'type': 'string'},
+                        'filename': {'type': 'string'}
+                    }
+                }
+            ]
+        },
         'gpuRequirements': {
             'type': 'array',
             'items': {
@@ -44,5 +56,5 @@ request_schema = {
         }
     },
     'additionalProperties': False,
-    'required': ['jupyterNotebooks', 'dependencies', 'gpuRequirements']
+    'required': ['jupyterNotebooks', 'dependencies', 'pythonRequirements', 'gpuRequirements']
 }

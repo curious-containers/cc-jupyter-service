@@ -13,6 +13,10 @@ RED_FILE_TEMPLATE = {
             "outputNotebookFilename": {
                 "type": "string",
                 "inputBinding": {"position": 2}
+            },
+            "pythonRequirements": {
+                "type": "File?",
+                "inputBinding": {"position": 3}
             }
         },
         "outputs": {
@@ -40,7 +44,22 @@ RED_FILE_TEMPLATE = {
             },
             "basename": "inputNotebook.ipynb"
         },
-        "outputNotebookFilename": "output.ipynb"
+        "outputNotebookFilename": "output.ipynb",
+        "pythonRequirements": {
+            "class": "File",
+            "connector": {
+                "command": "red-connector-http",
+                "access": {
+                    "url": None,
+                    "method": "GET",
+                    "auth": {
+                        "username": None,
+                        "password": None
+                    }
+                }
+            },
+            "basename": "requirements.txt"
+        }
     },
     "outputs": {
         "outputNotebook": {

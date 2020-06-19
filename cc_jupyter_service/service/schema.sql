@@ -20,6 +20,7 @@ CREATE TABLE notebook (
   execution_time INTEGER NOT NULL,
   debug_info TEXT,
   user_id INTEGER,
+  python_requirements TEXT,
   FOREIGN KEY (user_id) REFERENCES user (id)
 );
 

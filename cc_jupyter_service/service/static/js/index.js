@@ -1,6 +1,17 @@
 $(document).ready(function() {
     const DEFAULT_GPU_VRAM = 2048;
+
     class NotebookEntry {
+        data;
+        filename;
+
+        constructor(data, filename) {
+            this.data = data;
+            this.filename = filename;
+        }
+    }
+
+    class RequirementsEntry {
         data;
         filename;
 
@@ -32,17 +43,19 @@ $(document).ready(function() {
         }
     }
 
-    let jupyterNotebookEntries = [];
     const dependenciesSelection = {
         custom: false,
         predefinedImage: 'Base Image',
         customImage: ''
     }
+
+    let jupyterNotebookEntries = [];
     let globalPredefinedImages = [];
     let gpuRequirements = [];
     let externalDataInfo = [];
     let refreshResultsInterval = null;
     let resultStates = [];
+    let pythonRequirements = null;
     const REFRESH_RESULTS_INTERVAL = 4000;
 
     /**
@@ -433,6 +446,41 @@ $(document).ready(function() {
 
         setupDependencies(predefinedImagesRadio, predefinedImages, customImagesRadio, customImage);
 
+        const requirementsLabel = $('<label for="requirementsFile">Upload a requirements.txt file: </label>');
+        const requirementsFile = $('<input type="file" id="requirementsFile" name="requirementsFile">');
+
+        requirementsFile.on('change', function(target) {
+            if (this.files.length !== 1) {
+                console.error('Could not get requirements file. Num files: ', this.files.length);
+                addAlert('danger', 'Failed to load requirements file');
+                return;
+            }
+
+            const requirementsFile = this.files[0];
+
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                let requirementsData = ev.target.result.toString();
+                pythonRequirements = new RequirementsEntry(requirementsData, requirementsFile.name);
+
+                refreshRequirements($('#requirementsList'));
+            };
+            reader.onerror = function(ev) {
+                console.error('Failed to read requirements file. ', ev);
+                addAlert('danger', 'Could not load requirements file');
+            }
+            reader.readAsText(requirementsFile);
+        });
+
+        dependenciesSection.append('<br><br>');
+        dependenciesSection.append(requirementsLabel);
+        dependenciesSection.append(requirementsFile);
+        dependenciesSection.append('<br><br>');
+
+        const requirementsList = $('<ul id="requirementsList" class="list-group"> </ul>');
+        refreshRequirements(requirementsList);
+        dependenciesSection.append(requirementsList);
+
         // Hardware requirements
         const hardwareSection = $('<div id="hardwareSection">');
 
@@ -480,6 +528,7 @@ $(document).ready(function() {
                 data: JSON.stringify({
                     jupyterNotebooks: jupyterNotebookEntries,
                     dependencies: dependenciesSelection,
+                    pythonRequirements,
                     gpuRequirements,
                     externalData: externalDataInfo
                 })
@@ -504,6 +553,21 @@ $(document).ready(function() {
         main.append(submain);
 
         clearRefreshResultsInterval();
+    }
+
+    function refreshRequirements(requirementsList) {
+        requirementsList.empty();
+        if (pythonRequirements !== null) {
+            const li = $('<li class="list-group-item border-0">' + pythonRequirements.filename + '</li>');
+            const removeBtn = $('<button id="requirementsRemove" type="button" class="close"><i class="fa fa-times-circle"></i></button>')
+            removeBtn.click(function() {
+                pythonRequirements = null;
+                refreshRequirements($('#requirementsList'));
+            })
+            li.append(removeBtn);
+
+            requirementsList.append(li);
+        }
     }
 
     function clearRefreshResultsInterval() {

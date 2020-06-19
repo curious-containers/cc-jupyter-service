@@ -27,7 +27,7 @@ class DatabaseAPI:
     class Notebook:
         def __init__(
             self, db_id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time,
-            debug_info, user_id
+            debug_info, user_id, python_requirements
         ):
             """
             Creates a Notebook.
@@ -50,6 +50,8 @@ class DatabaseAPI:
             :type debug_info: str or None
             :param user_id: The user id that executed this notebook
             :type user_id: int
+            :param python_requirements: The content of a requirements.txt file
+            :type python_requirements: str
             """
             self.db_id = db_id
             self.notebook_id = notebook_id
@@ -60,6 +62,7 @@ class DatabaseAPI:
             self.execution_time = execution_time
             self.debug_info = debug_info
             self.user_id = user_id
+            self.python_requirements = python_requirements
 
         def get_filename_without_ext(self):
             """
@@ -138,7 +141,7 @@ class DatabaseAPI:
 
     def create_notebook(
             self, notebook_id, notebook_token, user_id, experiment_id, notebook_filename, execution_time,
-            status=NotebookStatus.PROCESSING
+            status=NotebookStatus.PROCESSING, python_requirements=None
     ):
         """
         Inserts the given notebook information into the db.
@@ -157,14 +160,17 @@ class DatabaseAPI:
         :type execution_time: int
         :param status: The initial status of the notebook. Defaults to PROCESSING
         :type status: DatabaseAPI.NotebookStatus
+        :param python_requirements: The python requirements for this notebook
+        :type python_requirements: str or None
         """
         self.db.execute(
             'INSERT INTO notebook ('
-            'notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, user_id'
-            ') VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, user_id, '
+            'python_requirements'
+            ') VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             (
                 notebook_id, generate_password_hash(notebook_token), experiment_id, int(status), notebook_filename,
-                execution_time, user_id
+                execution_time, user_id, python_requirements
             )
         )
         self.db.commit()
@@ -212,7 +218,7 @@ class DatabaseAPI:
         """
         cur = self.db.execute(
             'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, '
-            'debug_info, user_id '
+            'debug_info, user_id, python_requirements '
             'FROM notebook WHERE notebook_id is ?',
             (notebook_id,)
         )
@@ -226,7 +232,7 @@ class DatabaseAPI:
         if row is None:
             raise DatabaseError('NotebookID "{}" could not be found'.format(notebook_id))
 
-        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
+        return DatabaseAPI.Notebook(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9])
 
     def get_notebooks(self, user_id, status=None):
         """
@@ -242,7 +248,7 @@ class DatabaseAPI:
         if status is None:
             cur = self.db.execute(
                 'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, '
-                'debug_info, user_id '
+                'debug_info, user_id, python_requirements '
                 'FROM notebook '
                 'WHERE user_id is ?',
                 (user_id,)
@@ -250,7 +256,7 @@ class DatabaseAPI:
         else:
             cur = self.db.execute(
                 'SELECT id, notebook_id, notebook_token, experiment_id, status, notebook_filename, execution_time, '
-                'debug_info, user_id '
+                'debug_info, user_id, python_requirements '
                 'FROM notebook '
                 'WHERE user_id is ? AND status is ?',
                 (user_id, int(status))
@@ -267,7 +273,8 @@ class DatabaseAPI:
                 notebook_filename=notebook_data[5],
                 execution_time=notebook_data[6],
                 debug_info=notebook_data[7],
-                user_id=notebook_data[8]
+                user_id=notebook_data[8],
+                python_requirements=notebook_data[9]
             ))
         return notebooks
 
