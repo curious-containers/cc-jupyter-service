@@ -30,8 +30,9 @@ $(document).ready(function() {
         username;
         password;
         mount;
+        value;
 
-        constructor(inputName=null, inputType=null, connectorType=null, host=null, path=null, username=null, password=null, mount=null) {
+        constructor(inputName=null, inputType=null, connectorType=null, host=null, path=null, username=null, password=null, mount=null, value=null) {
             this.inputName = inputName;
             this.inputType = inputType;
             this.connectorType = connectorType;
@@ -40,6 +41,7 @@ $(document).ready(function() {
             this.username = username;
             this.password = password;
             this.mount = mount;
+            this.value = value;
         }
     }
 
@@ -227,7 +229,7 @@ $(document).ready(function() {
             externalDataSubSection.append(inputNameInput);
             const typeSelect = $('<select id="externalDataTypeSelect' + elemIndex + '">')
 
-            for (const opt of [null, 'File', 'Directory']) {
+            for (const opt of [null, 'File', 'Directory', 'String']) {
                 let text = opt;
                 if (opt == null) text = '-';
                 const option = $('<option value="' + opt + '">' + text + '</option>');
@@ -376,6 +378,15 @@ $(document).ready(function() {
                     mountLabel.append(mountInput);
                     mountLabel.append('Mount')
                 }
+            } else if (externalDataEntry.inputType === 'String') {
+                externalDataSubSection.append('<br>');
+                externalDataSubSection.append('<label for="externalDataValue' + elemIndex + '">String value: </label>');
+                const valueInput = $('<input type="text" id="externalDataValue' + elemIndex + '" class="form-control no-break">');
+                valueInput.on('input', function() {
+                    externalDataEntry.value = valueInput.val();
+                });
+                valueInput.val(externalDataEntry.value);
+                externalDataSubSection.append(valueInput);
             }
         }
 

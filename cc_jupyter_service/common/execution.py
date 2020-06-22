@@ -143,46 +143,56 @@ def _create_red_data(
     # external data
     cli_inputs = red_data['cli']['inputs']
     for external_datum in external_data:
-        if external_datum['connectorType'] == 'SSH':
-            input_name = external_datum['inputName']
+        input_name = external_datum['inputName']
+        if external_datum['inputType'] in ['File', 'Directory']:
+            if external_datum['connectorType'] == 'SSH':
 
-            # add cli specification
+                # add cli specification
+                cli_inputs[input_name] = {
+                    'type': external_datum['inputType'],
+                    'inputBinding': {
+                        'prefix': input_name + '=',
+                        'separate': False
+                    }
+                }
+
+                # add input specification
+                red_data['inputs'][input_name] = {
+                    'class': external_datum['inputType'],
+                    'connector': {
+                        'command': 'red-connector-ssh',
+                        'access': {
+                            'host': external_datum['host'],
+                            'auth': {
+                                'username': external_datum['username'],
+                                'password': external_datum['password']
+                            }
+                        }
+                    }
+                }
+                if external_datum['inputType'] == 'File':
+                    red_data['inputs'][input_name]['connector']['access']['filePath'] = external_datum['path']
+                elif external_datum['inputType'] == 'Directory':
+                    red_data['inputs'][input_name]['connector']['access']['dirPath'] = external_datum['path']
+                    red_data['inputs'][input_name]['connector']['mount'] = external_datum['mount']
+                    if external_datum['mount']:
+                        red_data['inputs'][input_name]['connector']['access']['writable'] = True
+                else:
+                    raise ValueError('Unknown inputType "{}" for "{}"'.format(external_datum['inputType'], input_name))
+            else:
+                raise ValueError(
+                    'Connector Types different from SSH are currently not supported. Got connector type: {}'
+                    .format(external_datum['connectorType'])
+                )
+        elif external_datum['inputType'] == 'String':
             cli_inputs[input_name] = {
-                'type': external_datum['inputType'],
+                'type': 'string',
                 'inputBinding': {
                     'prefix': input_name + '=',
                     'separate': False
                 }
             }
-
-            # add input specification
-            red_data['inputs'][input_name] = {
-                'class': external_datum['inputType'],
-                'connector': {
-                    'command': 'red-connector-ssh',
-                    'access': {
-                        'host': external_datum['host'],
-                        'auth': {
-                            'username': external_datum['username'],
-                            'password': external_datum['password']
-                        }
-                    }
-                }
-            }
-            if external_datum['inputType'] == 'File':
-                red_data['inputs'][input_name]['connector']['access']['filePath'] = external_datum['path']
-            elif external_datum['inputType'] == 'Directory':
-                red_data['inputs'][input_name]['connector']['access']['dirPath'] = external_datum['path']
-                red_data['inputs'][input_name]['connector']['mount'] = external_datum['mount']
-                if external_datum['mount']:
-                    red_data['inputs'][input_name]['connector']['access']['writable'] = True
-            else:
-                raise ValueError('Unknown inputType "{}" for "{}"'.format(external_datum['inputType'], input_name))
-        else:
-            raise ValueError(
-                'Connector Types different from SSH are currently not supported. Got connector type: {}'
-                .format(external_datum['connectorType'])
-            )
+            red_data['inputs'][input_name] = external_datum['value']
 
     # python requirements
     if python_requirements is None:
