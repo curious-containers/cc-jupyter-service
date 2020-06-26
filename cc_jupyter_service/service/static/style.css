@@ -64,6 +64,10 @@ nav {
     margin-bottom: 0;
 }
 
+.nav-item {
+    cursor: pointer;
+}
+
 button.fixPadding {
     padding-top: 5px;
 }
