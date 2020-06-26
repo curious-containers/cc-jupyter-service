@@ -296,15 +296,15 @@ class DatabaseAPI:
         self.db.commit()
         return cur.lastrowid
 
-    def get_user(self, user_id=None, agency_username=None):
+    def get_user(self, user_id=None, agency_username_url=None):
         """
-        Gets a user by id or agency username. At least one of both should be given. If both are given agency username is
-        ignored.
+        Gets a user by id or agency username and url. At least one of both should be given. If both are given agency
+        username/url is ignored.
 
         :param user_id: The user id
         :type user_id: int
-        :param agency_username: The agency username of the user
-        :type agency_username: str
+        :param agency_username_url: A tuple containing the agency username of the user and the agency url
+        :type agency_username_url: tuple[str, str]
         :return: The user, if available. Otherwise None.
         :rtype: DatabaseAPI.User or None
 
@@ -315,13 +315,13 @@ class DatabaseAPI:
                 'SELECT id, agency_username, agency_url FROM user WHERE id is ?',
                 (user_id,)
             )
-        elif agency_username is not None:
+        elif agency_username_url is not None:
             cur = self.db.execute(
-                'SELECT id, agency_username, agency_url FROM user WHERE agency_username is ?',
-                (agency_username,)
+                'SELECT id, agency_username, agency_url FROM user WHERE agency_username is ? AND agency_url is ?',
+                (agency_username_url[0], agency_username_url[1])
             )
         else:
-            raise ValueError('user id and agency username are None')
+            raise ValueError('user id and agency username/url are None')
         user_data = cur.fetchone()
         if user_data is None:
             return None

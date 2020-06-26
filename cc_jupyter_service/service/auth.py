@@ -28,7 +28,7 @@ def login():
 
         if error is None:
             # get/create user
-            user = database_api.get_user(agency_username=agency_username)
+            user = database_api.get_user(agency_username_url=(agency_username, agency_url))
             if user is None:
                 user_id = database_api.create_user(agency_username, agency_url)
             else:
