@@ -9,6 +9,7 @@ yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 
 CONFIG_FILE_LOCATIONS = ['cc-jupyter-service-config.yml', '~/.config/cc-jupyter-service.yml']
+DEFAULT_SESSION_COOKIE = 'session'
 
 
 class ImageInfo:
@@ -33,7 +34,8 @@ class ImageInfo:
 
 class Conf:
     def __init__(
-        self, notebook_directory, flask_secret_key, prevent_localhost, predefined_docker_images, predefined_agency_urls
+        self, notebook_directory, flask_secret_key, prevent_localhost, predefined_docker_images, predefined_agency_urls,
+        flask_session_cookie
     ):
         """
         Creates a new Conf object.
@@ -48,13 +50,16 @@ class Conf:
                                          this list in the frontend.
         :type predefined_docker_images: list[ImageInfo]
         :param predefined_agency_urls: A list of strings defining agency urls which are displayed at the login page
-        :rtype predefined_agency_urls: list[str] or None
+        :type predefined_agency_urls: list[str] or None
+        :param flask_session_cookie: The name of the flask session cookie
+        :type flask_session_cookie: str
         """
         self.notebook_directory = notebook_directory
         self.flask_secret_key = flask_secret_key
         self.prevent_localhost = prevent_localhost
         self.predefined_docker_images = predefined_docker_images
         self.predefined_agency_urls = predefined_agency_urls
+        self.flask_session_cookie = flask_session_cookie
 
     @staticmethod
     def from_system():
@@ -109,7 +114,7 @@ class Conf:
             raise ConfigurationError('Invalid config file. {}'.format(e))
 
         predefined_docker_images = list(map(
-            lambda pddi: ImageInfo(pddi['name'], pddi['description'], pddi['tag']),
+            lambda image: ImageInfo(image['name'], image['description'], image['tag']),
             data.get('predefinedDockerImages', [])
         ))
 
@@ -118,7 +123,8 @@ class Conf:
             flask_secret_key=data['flaskSecretKey'],
             prevent_localhost=data.get('preventLocalhost', True),
             predefined_docker_images=predefined_docker_images,
-            predefined_agency_urls=data.get('predefinedAgencyUrls')
+            predefined_agency_urls=data.get('predefinedAgencyUrls'),
+            flask_session_cookie=data.get('flaskSessionCookie', DEFAULT_SESSION_COOKIE)
         )
 
 

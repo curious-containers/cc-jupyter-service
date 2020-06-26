@@ -30,6 +30,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY=conf.flask_secret_key,
+        SESSION_COOKIE_NAME=conf.flask_session_cookie,
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite')
     )
 

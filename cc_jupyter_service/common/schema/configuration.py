@@ -21,7 +21,8 @@ configuration_schema = {
             'type': 'array',
             'items': {'type': 'string'},
             'minItems': 1
-        }
+        },
+        'flaskSessionCookie': {'type': 'string'}
     },
     'additionalProperties': False,
     'required': ['notebookDirectory', 'flaskSecretKey']
