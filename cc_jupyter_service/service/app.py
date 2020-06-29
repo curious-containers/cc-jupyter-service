@@ -353,6 +353,11 @@ def _get_debug_info_for_batch(batch_id, agency_url, cookie):
             if debug_info:
                 return '\n'.join(debug_info)
 
+    for history_entry in batch_info['history']:
+        debug_info = history_entry.get('debugInfo')
+        if debug_info:
+            return debug_info
+
     raise ValueError('Could not get debug info for batch')
 
 
