@@ -771,6 +771,9 @@ $(document).ready(function() {
                 addResultEntry(index, resultTable, entry['notebook_id'], entry['process_status'], entry['notebook_filename'], entry['execution_time'], entry['debug_info']);
                 index += 1;
             }
+            if (data.length === 0) {
+                $('#resultSection').append('<a class="text-muted">No Notebooks</a>');
+            }
             $('#resultSpinner').remove();
         }).fail(function (_a, _b, e) {
             const resultTable = $('#resultTable')
