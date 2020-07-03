@@ -250,7 +250,7 @@ $(document).ready(function() {
             const removeExternalDataEntryButton = $('<button id="externalDataRemove' + elemIndex + '" type="button" class="close fixPadding"><i class="fa fa-times-circle"></i></button>');
             removeExternalDataEntryButton.click(function() {
                 externalDataInfo.splice(elemIndex, 1);
-                refreshExternalDataList($('#externalDataList'))
+                refreshExternalDataList($('#externalDataList'));
             })
             externalDataSubSection.append(removeExternalDataEntryButton);
 
@@ -422,7 +422,7 @@ $(document).ready(function() {
         const notebookLoadLabel = $('<label for="notebookLoadButton">or upload here: </label>');
         const notebookLoadButton = $('<input type="file" id="notebookLoadButton" name="notebookLoadButton">');
 
-        notebookLoadButton.on('change', function(target) {
+        notebookLoadButton.on('change', function(_target) {
             if (this.files.length !== 1) {
                 console.error('Could not get notebook file. Num files: ', this.files.length);
                 addAlert('danger', 'Failed to load notebook file');
@@ -476,7 +476,7 @@ $(document).ready(function() {
         const requirementsLabel = $('<label for="requirementsFile">Upload a requirements.txt file: </label>');
         const requirementsFile = $('<input type="file" id="requirementsFile" name="requirementsFile">');
 
-        requirementsFile.on('change', function(target) {
+        requirementsFile.on('change', function(_target) {
             if (this.files.length !== 1) {
                 console.error('Could not get requirements file. Num files: ', this.files.length);
                 addAlert('danger', 'Failed to load requirements file');
@@ -820,7 +820,6 @@ $(document).ready(function() {
     }
 
     function loadNotebookFile(file) {
-        const notebookList = $('#notebookList');
         const reader = new FileReader();
         reader.onload = function(ev) {
             let json = null;
@@ -834,9 +833,42 @@ $(document).ready(function() {
                 return;
             }
             jupyterNotebookEntries.push(new NotebookEntry(json, file.name));
-            refreshNotebookList(notebookList);
+            loadExternalDataFromNotebook(json);
+            refreshNotebookList($('#notebookList'));
         };
         reader.readAsText(file);
+    }
+
+    function loadExternalDataFromNotebook(notebookData) {
+        if (externalDataInfo.length !== 0) {
+            return;
+        }
+        for (const cell of notebookData['cells']) {
+            if (!("metadata" in cell && "tags" in cell["metadata"])) {
+                continue;
+            }
+            if (!cell["metadata"]["tags"].includes('parameters')) {
+                continue;
+            }
+            if (!("source" in cell)) {
+                continue;
+            }
+            for (const line of cell['source']) {
+                const identifier = line.split(" ")[0];
+                const entry = new ExternalDataEntry(identifier);
+                if (identifier.toLowerCase().includes("file")) {
+                    entry.inputType = 'File';
+                    entry.connectorType = 'SSH';
+                } else if (identifier.toLowerCase().includes("dir")) {
+                    entry.inputType = 'Directory';
+                    entry.connectorType = 'SSH';
+                } else if (identifier.toLowerCase().includes("str")) {
+                    entry.inputType = 'String';
+                }
+                externalDataInfo.push(entry);
+            }
+        }
+        refreshExternalDataList($('#externalDataList'));
     }
 
     showExecutionView();
