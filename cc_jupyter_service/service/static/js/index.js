@@ -666,7 +666,6 @@ $(document).ready(function() {
     }
 
     function addResultEntry(elemIndex, resultTable, notebookId, processStatus, notebookFilename, executionTime, debugInfo) {
-        const row = $('<tr><td>' + notebookFilename + '</td><td>' + processStatus + '</td><td>' + formatTimestamp(executionTime) + '</td></tr>');
 
         // download button
         const downloadButton = $('<button class="btn btn-sm btn-outline-secondary" data-toggle="tooltip" title="download"><i class="fa fa-download"></i></button>');
@@ -720,7 +719,6 @@ $(document).ready(function() {
         const td = $('<td>');
         if (processStatus === 'processing') {
             td.append(cancelButton);
-            td.append('<div id="processingSpinner' + elemIndex + '" class="spinner-border text-muted"></div>');
         }
         if (processStatus === 'success') {
             td.append(downloadButton);
@@ -729,6 +727,13 @@ $(document).ready(function() {
             td.append(showDebugInfoButton);
             td.append(showDebugInfoModal);
         }
+        const row = $('<tr><td>' + notebookFilename + '</td>');
+        const processTd = $('<td>' + processStatus + '</td>');
+        if (processStatus === 'processing') {
+            processTd.append('&ensp;<div id="processingSpinner' + elemIndex + '" class="spinner-border spinner-border-sm text-muted"></div>');
+        }
+        row.append(processTd);
+        row.append('<td>' + formatTimestamp(executionTime) + '</td>');
         row.append(td);
 
         resultTable.append(row);
