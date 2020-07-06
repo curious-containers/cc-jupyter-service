@@ -661,6 +661,8 @@ $(document).ready(function() {
         let timeStr = '' + padZero(date.getHours()) + ':' + padZero(date.getMinutes()) + ':' + padZero(date.getSeconds());
         if (date.getFullYear() !== now.getFullYear() || date.getMonth() !== now.getMonth() || date.getDate() !== now.getDate()) {
             timeStr = timeStr + '&nbsp;&nbsp;&nbsp;' + padZero(date.getDate()) + '-' + padZero((date.getMonth()+1)) + '-' + date.getFullYear();
+        } else {
+            timeStr = timeStr + '&nbsp;&nbsp;&nbsp;today';
         }
         return timeStr;
     }
