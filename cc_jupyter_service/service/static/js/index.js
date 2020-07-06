@@ -720,6 +720,7 @@ $(document).ready(function() {
         const td = $('<td>');
         if (processStatus === 'processing') {
             td.append(cancelButton);
+            td.append('<div id="processingSpinner' + elemIndex + '" class="spinner-border text-muted"></div>');
         }
         if (processStatus === 'success') {
             td.append(downloadButton);
