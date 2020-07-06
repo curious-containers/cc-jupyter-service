@@ -11,6 +11,12 @@ def main():
     for arg in sys.argv[1:]:
         if '=' in arg:
             name, value = arg.split('=', maxsplit=1)
+            if name.startswith('%f'):
+                name = name[2:]
+                value = float(value)
+            elif name.startswith('%i'):
+                name = name[2:]
+                value = int(value)
             parameters[name] = value
         else:
             positional_arguments.append(arg)

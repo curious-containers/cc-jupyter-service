@@ -193,6 +193,24 @@ def _create_red_data(
                 }
             }
             red_data['inputs'][input_name] = external_datum['value']
+        elif external_datum['inputType'] == 'Integer':
+            cli_inputs[input_name] = {
+                'type': 'int',
+                'inputBinding': {
+                    'prefix': '%i{}='.format(input_name),
+                    'separate': False
+                }
+            }
+            red_data['inputs'][input_name] = int(external_datum['value'])
+        elif external_datum['inputType'] == 'Float':
+            cli_inputs[input_name] = {
+                'type': 'float',
+                'inputBinding': {
+                    'prefix': '%f{}='.format(input_name),
+                    'separate': False
+                }
+            }
+            red_data['inputs'][input_name] = float(external_datum['value'])
 
     # python requirements
     if python_requirements is None:
