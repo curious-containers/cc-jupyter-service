@@ -2,7 +2,8 @@
 
 CC-Jupyter-Service is part of the Curious Containers project. It implements a web service to execute jupyter notebooks on a cc-agency installation.
 
-For more information please refer to the Curious Containers [documentation](https://www.curious-containers.cc/).
+For more information please refer to the CC-Jupyter-Service [documentation](https://github.com/curious-containers/cc-jupyter-service.github.io) or the Curious
+Containers [documentation](https://www.curious-containers.cc/).
 
 ## Acknowledgements
 
