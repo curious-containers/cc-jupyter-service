@@ -718,7 +718,7 @@ $(document).ready(function() {
 
         // td
         const td = $('<td>');
-        if (processStatus === 'success') {
+        if (processStatus === 'processing') {
             td.append(cancelButton);
         }
         if (processStatus === 'success') {
