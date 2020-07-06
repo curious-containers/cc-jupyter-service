@@ -675,7 +675,6 @@ $(document).ready(function() {
         downloadButton.click(function (_a) {
             window.open(getUrl('result/' + notebookId), '_blank');
         })
-        downloadButton.prop('disabled', processStatus !== 'success');
 
         // cancel button
         const cancelButton = $('<button class="btn btn-sm btn-outline-secondary" data-toggle="tooltip" title="Cancel"><i class="fa fa-times-circle"></i></button>');
@@ -697,7 +696,6 @@ $(document).ready(function() {
                 console.error('Failed to cancel notebook ', notebookId, '\nerror: ', e);
             });
         });
-        cancelButton.prop('disabled', processStatus !== 'processing');
 
         // show debug info button
         let showDebugInfoButton = null;
@@ -720,8 +718,12 @@ $(document).ready(function() {
 
         // td
         const td = $('<td>');
-        td.append(cancelButton);
-        td.append(downloadButton);
+        if (processStatus === 'success') {
+            td.append(cancelButton);
+        }
+        if (processStatus === 'success') {
+            td.append(downloadButton);
+        }
         if (showDebugInfoModal) {
             td.append(showDebugInfoButton);
             td.append(showDebugInfoModal);
@@ -801,7 +803,7 @@ $(document).ready(function() {
             if (!verbose && !newResults) {
                 return;
             }
-            const resultTable = $('#resultTable')
+            const resultTable = $('#resultTable');
             clearResultTable(resultTable);
             let index = 0;
             for (let entry of data) {
@@ -813,7 +815,7 @@ $(document).ready(function() {
             }
             $('#resultSpinner').remove();
         }).fail(function (_a, _b, e) {
-            const resultTable = $('#resultTable')
+            const resultTable = $('#resultTable');
             clearResultTable(resultTable);
             console.error('Failed to refresh job list: ', e);
             addAlert('danger', 'Failed to refresh the job list!');
