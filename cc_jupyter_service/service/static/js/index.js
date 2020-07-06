@@ -229,7 +229,7 @@ $(document).ready(function() {
             externalDataSubSection.append(inputNameInput);
             const typeSelect = $('<select id="externalDataTypeSelect' + elemIndex + '">')
 
-            for (const opt of [null, 'File', 'Directory', 'String']) {
+            for (const opt of [null, 'File', 'Directory', 'String', 'Integer', 'Float']) {
                 let text = opt;
                 if (opt == null) text = '-';
                 const option = $('<option value="' + opt + '">' + text + '</option>');
@@ -243,6 +243,23 @@ $(document).ready(function() {
                     val = null;
                 }
                 externalDataInfo[elemIndex].inputType = val;
+                if (val === 'String') {
+                    externalDataInfo[elemIndex].value = String(externalDataInfo[elemIndex].value);
+                } else if (val === 'Integer') {
+                    let v = parseInt(externalDataInfo[elemIndex].value);
+                    if (isNaN(v)) {
+                        v = 0;
+                    }
+                    externalDataInfo[elemIndex].value = v;
+                } else if (val === 'Float') {
+                    let v = parseFloat(externalDataInfo[elemIndex].value);
+                    if (isNaN(v)) {
+                        v = 0;
+                    }
+                    externalDataInfo[elemIndex].value = v;
+                } else {
+                    externalDataInfo[elemIndex].value = null;
+                }
                 refreshExternalDataSubSection(externalDataSubSection, externalDataEntry, elemIndex);
             });
             externalDataSubSection.append(typeSelect);
@@ -378,12 +395,32 @@ $(document).ready(function() {
                     mountLabel.append(mountInput);
                     mountLabel.append('Mount')
                 }
-            } else if (externalDataEntry.inputType === 'String') {
+            } else if (['String', 'Integer', 'Float'].includes(externalDataEntry.inputType)) {
                 externalDataSubSection.append('<br>');
-                externalDataSubSection.append('<label for="externalDataValue' + elemIndex + '">String value: </label>');
+                externalDataSubSection.append('<label for="externalDataValue' + elemIndex + '">' + externalDataEntry.inputType + ' value: </label>');
                 const valueInput = $('<input type="text" id="externalDataValue' + elemIndex + '" class="form-control no-break">');
                 valueInput.on('input', function() {
-                    externalDataEntry.value = valueInput.val();
+                    if (externalDataEntry.inputType === 'String') {
+                        externalDataEntry.value = valueInput.val();
+                    } else if (externalDataEntry.inputType === 'Float') {
+                        const v = Number(valueInput.val());
+                        if (isNaN(v)) {
+                            if (!(String(valueInput.val()).endsWith("e") || String(valueInput.val()).endsWith("e-"))) {
+                                valueInput.val(String(externalDataEntry.value));
+                            }
+                        } else {
+                            externalDataEntry.value = v;
+                        }
+                    } else if (externalDataEntry.inputType === 'Integer') {
+                        const v = Number(valueInput.val());
+                        if (isNaN(v) || !Number.isInteger(v)) {
+                            if (!(String(valueInput.val()).endsWith("e") || String(valueInput.val()).endsWith("e-"))) {
+                                valueInput.val(String(externalDataEntry.value));
+                            }
+                        } else {
+                            externalDataEntry.value = v;
+                        }
+                    }
                 });
                 valueInput.val(externalDataEntry.value);
                 externalDataSubSection.append(valueInput);
@@ -827,7 +864,6 @@ $(document).ready(function() {
         reader.onload = function(ev) {
             let json = null;
             try {
-                // noinspection JSIgnoredPromiseFromCall
                 const res = ev.target.result.toString();
                 json = JSON.parse(res);
             } catch (error) {
@@ -856,6 +892,7 @@ $(document).ready(function() {
             if (!("source" in cell)) {
                 continue;
             }
+            // TODO: fix for case "identifier=value"
             for (const line of cell['source']) {
                 const identifier = line.split(" ")[0];
                 const entry = new ExternalDataEntry(identifier);
@@ -867,6 +904,10 @@ $(document).ready(function() {
                     entry.connectorType = 'SSH';
                 } else if (identifier.toLowerCase().includes("str")) {
                     entry.inputType = 'String';
+                } else if (identifier.toLowerCase().includes("num")) {
+                    entry.inputType = 'Integer';
+                } else if (identifier.toLowerCase().includes("rate")) {
+                    entry.inputType = 'Float';
                 }
                 externalDataInfo.push(entry);
             }
